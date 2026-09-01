@@ -33,17 +33,19 @@ Manages **job applications** submitted by candidates for the HireFlow AI recruit
 
 ## Inter-Service Communication
 
-This service uses **OpenFeign** to communicate with the **Company & Job Service** (port 8082).
+This service uses **OpenFeign** with **Eureka service discovery** to communicate with the **Company & Job Service**.
 
-The `GET /api/applications/{id}/with-job` endpoint fetches the application data and then calls the Company & Job Service to retrieve the associated job details.
+The `GET /api/applications/{id}/with-job` endpoint fetches the application data and then calls the Company & Job Service (discovered via Eureka) to retrieve the associated job details.
 
 ```java
-@FeignClient(name = "company-job-service", url = "http://localhost:8082")
+@FeignClient(name = "company-job-service")
 public interface JobClient {
     @GetMapping("/api/jobs/{id}")
     Map<String, Object> getJobById(@PathVariable("id") String id);
 }
 ```
+
+> **Note:** The Feign client uses the Eureka-registered service name `company-job-service` instead of a hardcoded URL. Eureka discovers the service location automatically.
 
 ## API Endpoints
 
@@ -95,7 +97,39 @@ public interface JobClient {
 ## How to Run
 
 1. Make sure MongoDB is running on `localhost:27017`
-2. Start the **Company & Job Service** first (port 8082)
-3. Navigate to the `application-service` directory
-4. Run: `mvn spring-boot:run`
-5. The service will start on `http://localhost:8084`
+2. Make sure the **Eureka Server** is running on `localhost:8761`
+3. Start the **Company & Job Service** (port 8082) so that the OpenFeign call can work
+4. Navigate to the `application-service` directory
+5. Run: `mvn spring-boot:run`
+6. The service will start on `http://localhost:8084`
+
+---
+
+### Eureka
+
+This service is registered as an **Eureka Client** with the central Eureka Server.
+
+- **Eureka Server address:** `http://localhost:8761/eureka/`
+- **Service name registered with Eureka:** `application-service`
+- **Registration:** Automatic on startup — the service registers itself with the Eureka Server and sends periodic heartbeats
+- **Service Discovery:** This service uses Eureka to discover `company-job-service` for OpenFeign communication instead of a hardcoded URL
+
+Once running, this service will appear on the Eureka Dashboard at `http://localhost:8761`.
+
+### Swagger
+
+This service provides **interactive API documentation** using Swagger (OpenAPI).
+
+- **Swagger UI URL:** [http://localhost:8084/swagger-ui/index.html](http://localhost:8084/swagger-ui/index.html)
+- **OpenAPI JSON:** [http://localhost:8084/v3/api-docs](http://localhost:8084/v3/api-docs)
+
+**Available CRUD APIs on Swagger UI:**
+
+| Method | Endpoint |
+|--------|----------|
+| GET | `/api/applications` |
+| GET | `/api/applications/{id}` |
+| GET | `/api/applications/{id}/with-job` |
+| POST | `/api/applications` |
+| PUT | `/api/applications/{id}` |
+| DELETE | `/api/applications/{id}` |

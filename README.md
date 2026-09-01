@@ -12,9 +12,11 @@ Build **6 Spring Boot microservices** with:
 - Basic CRUD operations for each service
 - MongoDB database-per-service architecture
 - Inter-service communication using OpenFeign
+- **Eureka Server** for service registration and discovery
+- **Swagger/OpenAPI** interactive API documentation
 - Proper REST API documentation
 
-This phase focuses on demonstrating core microservice concepts: independently deployable services, each owning its own database, communicating through lightweight HTTP mechanisms.
+This phase focuses on demonstrating core microservice concepts: independently deployable services, each owning its own database, communicating through lightweight HTTP mechanisms, discovering each other via a central service registry, and providing interactive API documentation.
 
 ---
 
@@ -22,6 +24,7 @@ This phase focuses on demonstrating core microservice concepts: independently de
 
 | # | Service | Port | Database | Description |
 |---|---------|------|----------|-------------|
+| - | eureka-server | 8761 | - | Central service registry (Eureka Server) |
 | 1 | user-service | 8081 | user_db | Manages basic user information (candidates and recruiters) |
 | 2 | company-job-service | 8082 | company_job_db | Manages companies and job postings |
 | 3 | candidate-service | 8083 | candidate_db | Manages candidate profile information |
@@ -34,19 +37,30 @@ This phase focuses on demonstrating core microservice concepts: independently de
 ## Architecture Overview
 
 ```
-                        Client / Postman
-                              |
-                              | HTTP REST
-                              |
-    ---------------------------------------------------------------
-    |           |            |            |           |            |
-  User      Company &    Candidate   Application  Interview  Notification
-  Service   Job Service  Service     Service      Service    Service
-  :8081     :8082        :8083       :8084        :8085      :8086
-    |           |            |            |           |            |
-  MongoDB    MongoDB      MongoDB     MongoDB     MongoDB     MongoDB
-  user_db    company_     candidate_  application_ interview_  notification_
-             job_db       db          db           db          db
+                         ┌──────────────────────┐
+                         │    Eureka Server      │
+                         │       :8761           │
+                         └──────────┬────────────┘
+                                    │
+             ┌──────────────────────┼──────────────────────┐
+             │          │           │          │            │
+             ↓          ↓           ↓          ↓            ↓
+          User      Company &   Candidate  Application   Interview
+         Service    Job Service  Service    Service      Service
+          :8081       :8082       :8083       :8084        :8085
+             │          │           │          │            │
+             ↓          ↓           ↓          ↓            ↓
+          MongoDB    MongoDB     MongoDB    MongoDB      MongoDB
+          user_db    company_    candidate_ application_ interview_
+                     job_db      db         db           db
+
+                              Notification
+                                Service
+                                  :8086
+                                    │
+                                    ↓
+                                 MongoDB
+                              notification_db
 ```
 
 **Key Architecture Principles:**
@@ -55,6 +69,108 @@ This phase focuses on demonstrating core microservice concepts: independently de
 - Services are **loosely coupled** and **independently deployable**
 - No service directly accesses another service's database
 - Inter-service communication happens through **HTTP REST calls** using **OpenFeign**
+- All services register with **Eureka Server** for service discovery
+- Each service provides **Swagger UI** for interactive API documentation
+
+---
+
+## Eureka Server – Service Registry
+
+Eureka Server acts as a **central service registry**. The microservices register themselves as Eureka Clients. When one service needs to communicate with another service, the target service can be discovered using its registered service name instead of relying on a hardcoded host and port.
+
+### How It Works
+
+1. **Eureka Server** starts on port `8761` and waits for service registrations
+2. Each microservice starts and **registers itself** with the Eureka Server (as an Eureka Client)
+3. The Eureka Server maintains a **registry** of all registered services and their network locations
+4. When a service needs to call another service, it queries Eureka to **discover** the target service by name
+5. Services send periodic **heartbeats** to the Eureka Server to indicate they are still running
+
+### Eureka Dashboard
+
+Once all services are running, the Eureka Dashboard is accessible at:
+
+**http://localhost:8761**
+
+The dashboard shows all registered service instances.
+
+---
+
+## Eureka Client Registration
+
+All six microservices are configured as Eureka Clients:
+
+| Service | Eureka Name | Port |
+|---------|-------------|------|
+| User Service | `user-service` | 8081 |
+| Company & Job Service | `company-job-service` | 8082 |
+| Candidate Service | `candidate-service` | 8083 |
+| Application Service | `application-service` | 8084 |
+| Interview Service | `interview-service` | 8085 |
+| Notification Service | `notification-service` | 8086 |
+
+Each service registers with:
+```properties
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka/
+eureka.instance.prefer-ip-address=true
+```
+
+---
+
+## Service Discovery with OpenFeign
+
+The project demonstrates **service discovery** using **Eureka** combined with **OpenFeign** for inter-service communication.
+
+### Implementation: Application Service → Company & Job Service
+
+When retrieving an application with job details (`GET /api/applications/{id}/with-job`), the Application Service uses OpenFeign to call the Company & Job Service. The target service is discovered via Eureka using its registered service name.
+
+```
+Application Service (port 8084)
+        │
+        │ OpenFeign
+        ↓
+Eureka Server (port 8761)
+        │
+        │ discovers company-job-service
+        ↓
+Company & Job Service (port 8082)
+    GET /api/jobs/{id}
+```
+
+This is implemented using a Feign client interface:
+
+```java
+@FeignClient(name = "company-job-service")
+public interface JobClient {
+    @GetMapping("/api/jobs/{id}")
+    Map<String, Object> getJobById(@PathVariable("id") String id);
+}
+```
+
+> **Note:** The `@FeignClient` annotation uses only the Eureka service name (`company-job-service`). There is no hardcoded URL. Eureka discovers the service location automatically.
+
+---
+
+## Swagger API Documentation
+
+Each microservice provides **interactive API documentation** using **Swagger (OpenAPI)**. The Swagger UI allows you to:
+
+- See all available endpoints
+- See GET/POST/PUT/DELETE operations
+- See request bodies and path parameters
+- Try API requests directly from the browser
+
+### Swagger UI URLs
+
+| Service | Swagger UI URL |
+|---------|---------------|
+| User Service | http://localhost:8081/swagger-ui/index.html |
+| Company & Job Service | http://localhost:8082/swagger-ui/index.html |
+| Candidate Service | http://localhost:8083/swagger-ui/index.html |
+| Application Service | http://localhost:8084/swagger-ui/index.html |
+| Interview Service | http://localhost:8085/swagger-ui/index.html |
+| Notification Service | http://localhost:8086/swagger-ui/index.html |
 
 ---
 
@@ -64,9 +180,12 @@ This phase focuses on demonstrating core microservice concepts: independently de
 |------------|---------|
 | Java 17 | Programming language |
 | Spring Boot 3.2.5 | Microservice framework |
+| Spring Cloud 2023.0.1 | Cloud-native support (Eureka, OpenFeign) |
+| Spring Cloud Netflix Eureka | Service registration and discovery |
 | Spring Data MongoDB | Database access layer |
 | MongoDB | NoSQL database (local) |
 | OpenFeign | Inter-service HTTP communication |
+| SpringDoc OpenAPI (Swagger) | Interactive API documentation |
 | Maven | Build tool |
 
 ---
@@ -88,40 +207,6 @@ MongoDB auto-creates databases and collections on first write, so **no manual da
 
 ---
 
-## Inter-Service Communication
-
-The project demonstrates **synchronous HTTP communication** between microservices using **OpenFeign**.
-
-### Implementation
-
-**Application Service → Company & Job Service**
-
-When retrieving an application with job details (`GET /api/applications/{id}/with-job`), the Application Service uses OpenFeign to call the Company & Job Service and fetch the associated job information.
-
-```
-Application Service (port 8084)
-        |
-        | OpenFeign HTTP GET
-        |
-        ▼
-Company & Job Service (port 8082)
-    GET /api/jobs/{id}
-```
-
-This is implemented using a Feign client interface:
-
-```java
-@FeignClient(name = "company-job-service", url = "http://localhost:8082")
-public interface JobClient {
-    @GetMapping("/api/jobs/{id}")
-    Map<String, Object> getJobById(@PathVariable("id") String id);
-}
-```
-
-> **Note:** Eureka Server is optional for Phase 2. The current implementation uses simple service URLs for OpenFeign communication to keep the project focused on the core microservice, CRUD, MongoDB, and communication concepts.
-
----
-
 ## How to Run
 
 ### Prerequisites
@@ -130,7 +215,11 @@ public interface JobClient {
 2. **Maven 3.9+** installed (or use Maven Wrapper if provided)
 3. **MongoDB** running locally on `localhost:27017`
 
-### Step 1: Start MongoDB
+### Startup Order
+
+> **Important:** The Eureka Server should be running before the microservices start so that the services can register with the registry.
+
+**Step 1: Start MongoDB**
 
 Make sure MongoDB is running on the default port (27017):
 
@@ -142,15 +231,16 @@ net start MongoDB
 mongod --dbpath <your-data-directory>
 ```
 
-### Step 2: Build Each Service
-
-Open a terminal in each service directory and run:
+**Step 2: Start Eureka Server**
 
 ```bash
-mvn clean compile
+cd eureka-server
+mvn spring-boot:run
 ```
 
-### Step 3: Run Each Service
+Wait for the Eureka Server to start. Verify by opening http://localhost:8761 in a browser.
+
+**Step 3: Start All Microservices**
 
 Start each service in a **separate terminal window**:
 
@@ -180,7 +270,13 @@ cd notification-service
 mvn spring-boot:run
 ```
 
-> **Important:** For the OpenFeign communication to work, start **company-job-service** (port 8082) before **application-service** (port 8084).
+**Step 4: Verify Eureka Registration**
+
+Open http://localhost:8761 — all six services should appear as registered instances.
+
+**Step 5: Access Swagger UI**
+
+Open any service's Swagger UI (e.g., http://localhost:8081/swagger-ui/index.html) to view and test the APIs interactively.
 
 ---
 
@@ -328,7 +424,7 @@ curl -X POST http://localhost:8084/api/applications \
   }'
 ```
 
-### Get Application with Job Details (OpenFeign Demo)
+### Get Application with Job Details (OpenFeign + Eureka Demo)
 
 ```bash
 curl http://localhost:8084/api/applications/<application-id>/with-job
@@ -373,11 +469,18 @@ HireFlow/
 ├── README.md
 ├── notes/                          (PDF reference notes - gitignored)
 │
+├── eureka-server/
+│   ├── README.md
+│   ├── pom.xml
+│   └── src/main/java/com/hireflow/eurekaserver/
+│       └── EurekaServerApplication.java
+│
 ├── user-service/
 │   ├── README.md
 │   ├── pom.xml
 │   └── src/main/java/com/hireflow/userservice/
 │       ├── UserServiceApplication.java
+│       ├── config/OpenApiConfig.java
 │       ├── controller/UserController.java
 │       ├── service/UserService.java
 │       ├── repository/UserRepository.java
@@ -388,6 +491,7 @@ HireFlow/
 │   ├── pom.xml
 │   └── src/main/java/com/hireflow/companyjobservice/
 │       ├── CompanyJobServiceApplication.java
+│       ├── config/OpenApiConfig.java
 │       ├── controller/CompanyController.java
 │       ├── controller/JobController.java
 │       ├── service/CompanyService.java
@@ -402,6 +506,7 @@ HireFlow/
 │   ├── pom.xml
 │   └── src/main/java/com/hireflow/candidateservice/
 │       ├── CandidateServiceApplication.java
+│       ├── config/OpenApiConfig.java
 │       ├── controller/CandidateController.java
 │       ├── service/CandidateService.java
 │       ├── repository/CandidateRepository.java
@@ -412,6 +517,7 @@ HireFlow/
 │   ├── pom.xml
 │   └── src/main/java/com/hireflow/applicationservice/
 │       ├── ApplicationServiceApplication.java
+│       ├── config/OpenApiConfig.java
 │       ├── controller/ApplicationController.java
 │       ├── service/ApplicationService.java
 │       ├── repository/ApplicationRepository.java
@@ -423,6 +529,7 @@ HireFlow/
 │   ├── pom.xml
 │   └── src/main/java/com/hireflow/interviewservice/
 │       ├── InterviewServiceApplication.java
+│       ├── config/OpenApiConfig.java
 │       ├── controller/InterviewController.java
 │       ├── service/InterviewService.java
 │       ├── repository/InterviewRepository.java
@@ -433,6 +540,7 @@ HireFlow/
 │   ├── pom.xml
 │   └── src/main/java/com/hireflow/notificationservice/
 │       ├── NotificationServiceApplication.java
+│       ├── config/OpenApiConfig.java
 │       ├── controller/NotificationController.java
 │       ├── service/NotificationService.java
 │       ├── repository/NotificationRepository.java
@@ -453,9 +561,7 @@ The following features are **intentionally NOT implemented** in Phase 2:
 - ❌ AI/ML resume processing
 - ❌ File upload/storage
 - ❌ Email/SMS notifications (service only stores records)
-- ❌ Eureka Service Discovery
 - ❌ API Gateway
-- ❌ Swagger documentation
 - ❌ Docker / Kubernetes
 - ❌ Kafka / RabbitMQ (async messaging)
 - ❌ Redis caching
@@ -470,12 +576,16 @@ These features may be implemented in future phases.
 
 | Concept | Where Demonstrated |
 |---------|-------------------|
-| Microservices Architecture | 6 independent Spring Boot services |
+| Microservices Architecture | 7 independent Spring Boot services (6 business + 1 Eureka) |
 | Spring Boot | @SpringBootApplication in each service |
 | Dependency Injection | Constructor injection in all Controllers and Services |
 | REST APIs | @RestController, @GetMapping, @PostMapping, etc. |
 | CRUD Operations | Full create/read/update/delete in every service |
 | Spring Data MongoDB | MongoRepository for database access |
 | Database-per-Service | 6 separate MongoDB databases |
-| Inter-service Communication | OpenFeign (Application Service → Job Service) |
+| Eureka Server | Central service registry on port 8761 |
+| Eureka Client | All 6 services register as Eureka Clients |
+| Service Discovery | OpenFeign discovers services via Eureka name |
+| Inter-service Communication | OpenFeign (Application Service → Job Service via Eureka) |
+| Swagger/OpenAPI | Interactive API documentation for all services |
 | Loosely Coupled Services | No cross-database access, only HTTP communication |

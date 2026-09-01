@@ -60,6 +60,36 @@ Stores and manages **notification records** for the HireFlow AI recruitment plat
 ## How to Run
 
 1. Make sure MongoDB is running on `localhost:27017`
-2. Navigate to the `notification-service` directory
-3. Run: `mvn spring-boot:run`
-4. The service will start on `http://localhost:8086`
+2. Make sure the **Eureka Server** is running on `localhost:8761`
+3. Navigate to the `notification-service` directory
+4. Run: `mvn spring-boot:run`
+5. The service will start on `http://localhost:8086`
+
+---
+
+### Eureka
+
+This service is registered as an **Eureka Client** with the central Eureka Server.
+
+- **Eureka Server address:** `http://localhost:8761/eureka/`
+- **Service name registered with Eureka:** `notification-service`
+- **Registration:** Automatic on startup — the service registers itself with the Eureka Server and sends periodic heartbeats
+
+Once running, this service will appear on the Eureka Dashboard at `http://localhost:8761`.
+
+### Swagger
+
+This service provides **interactive API documentation** using Swagger (OpenAPI).
+
+- **Swagger UI URL:** [http://localhost:8086/swagger-ui/index.html](http://localhost:8086/swagger-ui/index.html)
+- **OpenAPI JSON:** [http://localhost:8086/v3/api-docs](http://localhost:8086/v3/api-docs)
+
+**Available CRUD APIs on Swagger UI:**
+
+| Method | Endpoint |
+|--------|----------|
+| GET | `/api/notifications` |
+| GET | `/api/notifications/{id}` |
+| POST | `/api/notifications` |
+| PUT | `/api/notifications/{id}` |
+| DELETE | `/api/notifications/{id}` |

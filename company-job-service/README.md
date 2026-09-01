@@ -99,6 +99,41 @@ Manages **companies** and **job postings** for the HireFlow AI recruitment platf
 ## How to Run
 
 1. Make sure MongoDB is running on `localhost:27017`
-2. Navigate to the `company-job-service` directory
-3. Run: `mvn spring-boot:run`
-4. The service will start on `http://localhost:8082`
+2. Make sure the **Eureka Server** is running on `localhost:8761`
+3. Navigate to the `company-job-service` directory
+4. Run: `mvn spring-boot:run`
+5. The service will start on `http://localhost:8082`
+
+---
+
+### Eureka
+
+This service is registered as an **Eureka Client** with the central Eureka Server.
+
+- **Eureka Server address:** `http://localhost:8761/eureka/`
+- **Service name registered with Eureka:** `company-job-service`
+- **Registration:** Automatic on startup — the service registers itself with the Eureka Server and sends periodic heartbeats
+
+Once running, this service will appear on the Eureka Dashboard at `http://localhost:8761`.
+
+### Swagger
+
+This service provides **interactive API documentation** using Swagger (OpenAPI).
+
+- **Swagger UI URL:** [http://localhost:8082/swagger-ui/index.html](http://localhost:8082/swagger-ui/index.html)
+- **OpenAPI JSON:** [http://localhost:8082/v3/api-docs](http://localhost:8082/v3/api-docs)
+
+**Available CRUD APIs on Swagger UI:**
+
+| Method | Endpoint |
+|--------|----------|
+| GET | `/api/companies` |
+| GET | `/api/companies/{id}` |
+| POST | `/api/companies` |
+| PUT | `/api/companies/{id}` |
+| DELETE | `/api/companies/{id}` |
+| GET | `/api/jobs` |
+| GET | `/api/jobs/{id}` |
+| POST | `/api/jobs` |
+| PUT | `/api/jobs/{id}` |
+| DELETE | `/api/jobs/{id}` |
