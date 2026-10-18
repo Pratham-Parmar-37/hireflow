@@ -11,7 +11,7 @@ pipeline {
         IMAGE_TAG = "${BUILD_NUMBER}"
         REGISTRY_TAG = 'hireflow:latest'
         // GitHub credentials ID configured in Jenkins (Manage Jenkins -> Credentials)
-        GIT_CREDENTIALS_ID = 'github-credentials'
+        GIT_CREDENTIALS_ID = 'github-pat-creds'
         GIT_BRANCH = 'main'
         GATEWAY_PORT = '8088'
     }
@@ -114,26 +114,36 @@ pipeline {
         // ----------------------------------------------------------------------
         stage('Push to GitHub') {
             steps {
-                echo '=== [Stage 5/5] Tests & Deployment passed. Checking GitHub credentials ==='
+                echo '=== [Stage 5/5] Tests & Deployment passed. Syncing to GitHub ==='
                 script {
                     timeout(time: 1, unit: 'MINUTES') {
-                        try {
-                            withCredentials([gitUsernamePassword(credentialsId: "${GIT_CREDENTIALS_ID}", gitToolName: 'git')]) {
-                                echo 'Credentials found. Pushing to GitHub...'
-                                withEnv(['GIT_TERMINAL_PROMPT=0', 'GCM_INTERACTIVE=never']) {
-                                    if (isUnix()) {
-                                        sh 'git push origin HEAD:${GIT_BRANCH}'
-                                    } else {
-                                        bat 'git push origin HEAD:%GIT_BRANCH%'
+                        def candidateCredIds = ["${GIT_CREDENTIALS_ID}", 'github-credentials', 'github-pat-creds']
+                        def pushed = false
+                        for (credId in candidateCredIds) {
+                            if (pushed) break
+                            try {
+                                withCredentials([usernamePassword(credentialsId: credId, usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                                    echo "Found credential '${credId}'. Pushing to GitHub..."
+                                    withEnv(['GIT_TERMINAL_PROMPT=0', 'GCM_INTERACTIVE=never']) {
+                                        if (isUnix()) {
+                                            sh 'git push https://${GIT_USER}:${GIT_PASS}@github.com/Pratham-Parmar-37/hireflow.git HEAD:${GIT_BRANCH}'
+                                        } else {
+                                            bat 'git push https://%GIT_USER%:%GIT_PASS%@github.com/Pratham-Parmar-37/hireflow.git HEAD:%GIT_BRANCH%'
+                                        }
                                     }
+                                    pushed = true
+                                    echo 'GitHub push completed successfully.'
                                 }
+                            } catch (Exception e) {
+                                // Try next candidate credential ID
                             }
-                        } catch (Exception e) {
+                        }
+                        if (!pushed) {
                             echo "=== NOTE ON GIT PUSH ==="
-                            echo "Skipped automatic push: '${GIT_CREDENTIALS_ID}' credential was not found in Jenkins."
+                            echo "Skipped automatic push: Neither 'github-pat-creds' nor 'github-credentials' credential was found in Jenkins."
                             echo "To enable auto-push, add your GitHub Personal Access Token:"
                             echo "Jenkins -> Manage Jenkins -> Credentials -> System -> Global credentials -> Add Credentials"
-                            echo "(Kind: Username with password, ID: github-credentials)"
+                            echo "(Kind: Username with password, ID: github-pat-creds)"
                         }
                     }
                 }
