@@ -96,12 +96,12 @@ pipeline {
                 script {
                     if (isUnix()) {
                         sh 'docker compose down || true'
-                        sh 'GATEWAY_PORT=8088 docker compose up -d'
+                        sh 'docker compose up -d'
                         sh 'sleep 20'
                         sh 'docker compose ps'
                     } else {
                         bat 'docker compose down || ver > nul'
-                        bat 'set GATEWAY_PORT=8088 && docker compose up -d'
+                        bat 'docker compose up -d'
                         bat 'powershell -Command "Start-Sleep -Seconds 20; docker compose ps"'
                     }
                 }
@@ -117,21 +117,27 @@ pipeline {
                 echo '=== [Stage 5/5] Tests & Deployment passed. Syncing to GitHub ==='
                 script {
                     catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-                        withCredentials([gitUsernamePassword(credentialsId: "${GIT_CREDENTIALS_ID}", gitToolName: 'git')]) {
+                        try {
+                            withCredentials([gitUsernamePassword(credentialsId: "${GIT_CREDENTIALS_ID}", gitToolName: 'git')]) {
+                                if (isUnix()) {
+                                    sh 'git push origin HEAD:${GIT_BRANCH}'
+                                } else {
+                                    bat 'git push origin HEAD:%GIT_BRANCH%'
+                                }
+                            }
+                        } catch (Exception e) {
+                            echo "Note: Using ambient Git credentials or configure '${GIT_CREDENTIALS_ID}' in Jenkins..."
                             if (isUnix()) {
-                                sh '''
-                                    git push origin ${GIT_BRANCH} || true
-                                '''
+                                sh 'git push origin HEAD:${GIT_BRANCH} || true'
                             } else {
-                                bat '''
-                                    git push origin %GIT_BRANCH% || ver > nul
-                                '''
+                                bat 'git push origin HEAD:%GIT_BRANCH% || ver > nul'
                             }
                         }
                     }
                 }
             }
         }
+
     }
 
     // --------------------------------------------------------------------------
