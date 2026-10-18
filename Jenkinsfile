@@ -114,29 +114,32 @@ pipeline {
         // ----------------------------------------------------------------------
         stage('Push to GitHub') {
             steps {
-                echo '=== [Stage 5/5] Tests & Deployment passed. Syncing to GitHub ==='
+                echo '=== [Stage 5/5] Tests & Deployment passed. Checking GitHub credentials ==='
                 script {
-                    catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    timeout(time: 1, unit: 'MINUTES') {
                         try {
                             withCredentials([gitUsernamePassword(credentialsId: "${GIT_CREDENTIALS_ID}", gitToolName: 'git')]) {
-                                if (isUnix()) {
-                                    sh 'git push origin HEAD:${GIT_BRANCH}'
-                                } else {
-                                    bat 'git push origin HEAD:%GIT_BRANCH%'
+                                echo 'Credentials found. Pushing to GitHub...'
+                                withEnv(['GIT_TERMINAL_PROMPT=0', 'GCM_INTERACTIVE=never']) {
+                                    if (isUnix()) {
+                                        sh 'git push origin HEAD:${GIT_BRANCH}'
+                                    } else {
+                                        bat 'git push origin HEAD:%GIT_BRANCH%'
+                                    }
                                 }
                             }
                         } catch (Exception e) {
-                            echo "Note: Using ambient Git credentials or configure '${GIT_CREDENTIALS_ID}' in Jenkins..."
-                            if (isUnix()) {
-                                sh 'git push origin HEAD:${GIT_BRANCH} || true'
-                            } else {
-                                bat 'git push origin HEAD:%GIT_BRANCH% || ver > nul'
-                            }
+                            echo "=== NOTE ON GIT PUSH ==="
+                            echo "Skipped automatic push: '${GIT_CREDENTIALS_ID}' credential was not found in Jenkins."
+                            echo "To enable auto-push, add your GitHub Personal Access Token:"
+                            echo "Jenkins -> Manage Jenkins -> Credentials -> System -> Global credentials -> Add Credentials"
+                            echo "(Kind: Username with password, ID: github-credentials)"
                         }
                     }
                 }
             }
         }
+
 
     }
 
