@@ -1,0 +1,66 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**
+
+        - id: company-service
+          uri: lb://company-job-service
+          predicates:
+            - Path=/api/companies/**
+
+        - id: job-service
+          uri: lb://company-job-service
+          predicates:
+            - Path=/api/jobs/**
+
+        - id: candidate-service
+          uri: lb://candidate-service
+          predicates:
+            - Path=/api/candidates/**
+
+        - id: application-service
+          uri: lb://application-service
+          predicates:
+            - Path=/api/applications/**
+
+        - id: interview-service
+          uri: lb://interview-service
+          predicates:
+            - Path=/api/interviews/**
+
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/notifications/**
+
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true

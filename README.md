@@ -8,7 +8,8 @@ HireFlow AI is a recruitment/hiring platform designed using **Microservices Arch
 
 ### Phase 2 Objective
 
-Build **6 Spring Boot microservices** with:
+Build **6 Spring Boot microservices** with a central **API Gateway**:
+- **API Gateway** for centralized client entry, request routing, and load balancing
 - Basic CRUD operations for each service
 - MongoDB database-per-service architecture
 - Inter-service communication using OpenFeign
@@ -25,6 +26,7 @@ This phase focuses on demonstrating core microservice concepts: independently de
 | # | Service | Port | Database | Description |
 |---|---------|------|----------|-------------|
 | - | eureka-server | 8761 | - | Central service registry (Eureka Server) |
+| 0 | api-gateway | 8080 | - | Central API Gateway (Reverse proxy, routing, load balancing) |
 | 1 | user-service | 8081 | user_db | Manages basic user information (candidates and recruiters) |
 | 2 | company-job-service | 8082 | company_job_db | Manages companies and job postings |
 | 3 | candidate-service | 8083 | candidate_db | Manages candidate profile information |
@@ -38,32 +40,45 @@ This phase focuses on demonstrating core microservice concepts: independently de
 
 ```
                          ┌──────────────────────┐
-                         │    Eureka Server      │
-                         │       :8761           │
-                         └──────────┬────────────┘
+                         │   Client / Postman   │
+                         └──────────┬───────────┘
                                     │
-             ┌──────────────────────┼──────────────────────┐
-             │          │           │          │            │
-             ↓          ↓           ↓          ↓            ↓
-          User      Company &   Candidate  Application   Interview
-         Service    Job Service  Service    Service      Service
-          :8081       :8082       :8083       :8084        :8085
-             │          │           │          │            │
-             ↓          ↓           ↓          ↓            ↓
-          MongoDB    MongoDB     MongoDB    MongoDB      MongoDB
-          user_db    company_    candidate_ application_ interview_
-                     job_db      db         db           db
+                              HTTP REST APIs
+                                    │
+                                    ▼
+                         ┌──────────────────────┐
+                         │     API Gateway      │
+                         │        :8080         │
+                         └──────────┬───────────┘
+                                    │ (Dynamic Routing via Eureka)
+                         ┌──────────┴───────────┐
+                         │    Eureka Server     │
+                         │        :8761         │
+                         └──────────┬───────────┘
+                                    │
+              ┌─────────────────────┼─────────────────────┐
+              │          │          │          │          │
+              ↓          ↓          ↓          ↓          ↓
+           User      Company &  Candidate  Application Interview
+          Service   Job Service  Service    Service     Service
+           :8081       :8082      :8083      :8084       :8085
+              │          │          │          │          │
+              ↓          ↓          ↓          ↓          ↓
+           MongoDB    MongoDB    MongoDB    MongoDB    MongoDB
+           user_db   company_   candidate_ application interview_
+                     job_db        db         db         db
 
                               Notification
                                 Service
-                                  :8086
-                                    │
-                                    ↓
-                                 MongoDB
-                              notification_db
+                                 :8086
+                                   │
+                                   ↓
+                                MongoDB
+                             notification_db
 ```
 
 **Key Architecture Principles:**
+- **Single Entry Point**: All external client requests route through the **API Gateway** on port `8080`
 - Each microservice is a **separate Spring Boot application** running on its own port
 - Each service has its **own MongoDB database** (database-per-service pattern)
 - Services are **loosely coupled** and **independently deployable**
@@ -71,6 +86,30 @@ This phase focuses on demonstrating core microservice concepts: independently de
 - Inter-service communication happens through **HTTP REST calls** using **OpenFeign**
 - All services register with **Eureka Server** for service discovery
 - Each service provides **Swagger UI** for interactive API documentation
+
+---
+
+## API Gateway – Centralized Entry Point & Routing
+
+HireFlow AI features a dedicated **API Gateway** built with **Spring Cloud Gateway** running on port `8080`. Instead of frontends or API consumers calling individual service ports (8081, 8082, etc.) directly, all requests pass through the gateway:
+
+### Features & Capabilities:
+- **Centralized Reverse Proxy**: Single entry point on port `8080` for all `/api/**` traffic.
+- **Dynamic Service Discovery (`lb://`)**: Routes requests by querying Eureka Server dynamically, eliminating hardcoded hostnames and ports.
+- **Client-Side Load Balancing**: Distributes load across available replicas using Spring Cloud LoadBalancer.
+- **Global CORS Configuration**: Permits cross-origin requests (`*`) from modern web frontends (React, Angular, Vue).
+
+### API Gateway Route Directory:
+
+| Client Request Path | Target Microservice | Route URI (Eureka) | Internal Port |
+|---------------------|---------------------|--------------------|---------------|
+| `/api/users/**` | User Service | `lb://user-service` | 8081 |
+| `/api/companies/**` | Company & Job Service | `lb://company-job-service` | 8082 |
+| `/api/jobs/**` | Company & Job Service | `lb://company-job-service` | 8082 |
+| `/api/candidates/**` | Candidate Service | `lb://candidate-service` | 8083 |
+| `/api/applications/**` | Application Service | `lb://application-service` | 8084 |
+| `/api/interviews/**` | Interview Service | `lb://interview-service` | 8085 |
+| `/api/notifications/**` | Notification Service | `lb://notification-service` | 8086 |
 
 ---
 
@@ -102,6 +141,7 @@ All six microservices are configured as Eureka Clients:
 
 | Service | Eureka Name | Port |
 |---------|-------------|------|
+| API Gateway | `api-gateway` | 8080 |
 | User Service | `user-service` | 8081 |
 | Company & Job Service | `company-job-service` | 8082 |
 | Candidate Service | `candidate-service` | 8083 |
@@ -179,14 +219,19 @@ Each microservice provides **interactive API documentation** using **Swagger (Op
 | Technology | Purpose |
 |------------|---------|
 | Java 17 | Programming language |
+| Spring Cloud Gateway | Reactive API gateway, reverse proxy & load balancer |
 | Spring Boot 3.2.5 | Microservice framework |
 | Spring Cloud 2023.0.1 | Cloud-native support (Eureka, OpenFeign) |
 | Spring Cloud Netflix Eureka | Service registration and discovery |
 | Spring Data MongoDB | Database access layer |
-| MongoDB | NoSQL database (local) |
+| MongoDB | NoSQL database |
 | OpenFeign | Inter-service HTTP communication |
 | SpringDoc OpenAPI (Swagger) | Interactive API documentation |
-| Maven | Build tool |
+| Maven | Dependency management & build tool |
+| Docker | Multi-stage containerization (all services) |
+| Docker Compose | Multi-container microservices orchestration |
+| Jenkins | Automated End-to-End CI/CD Pipeline & GitHub Sync |
+
 
 ---
 
@@ -209,15 +254,193 @@ MongoDB auto-creates databases and collections on first write, so **no manual da
 
 ## How to Run
 
-### Prerequisites
+You can run HireFlow AI using **Docker & Docker Compose** (recommended, zero local Java/Maven/MongoDB installation needed) or **locally via Maven** (traditional manual setup).
+
+---
+
+### Method 1: Docker (Recommended)
+
+Docker packages all 7 microservices into container images, eliminating the need to install Java, Maven, or MongoDB on your host machine.
+
+#### Prerequisites
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (v20+ with Docker Compose v2+) installed and running.
+
+---
+
+#### Step 1: Build the Unified Docker Image
+
+The root `Dockerfile` uses a high-performance **multi-stage build**:
+1. **Builder Stage (`maven:3.9.6-eclipse-temurin-17`)**: Compiles and packages all 7 microservices (`eureka-server` + 6 business services) into executable JARs with Maven.
+2. **Runtime Stage (`eclipse-temurin:17-jre-alpine`)**: Copies the JARs into a lightweight Alpine Linux JRE image (~430 MB total) with the orchestration entrypoint script (`entrypoint.sh`).
+
+To build the image, run the following command from the project root:
+
+```bash
+docker build -t hireflow:latest .
+```
+
+Verify that the image was created successfully:
+
+```bash
+docker images hireflow:latest
+```
+
+---
+
+#### Step 2: Create and Run Docker Containers
+
+You have three options to run containers from the image:
+
+##### Option A: Run Full Stack with Docker Compose (Easiest & Most Complete)
+
+The included `docker-compose.yml` launches **MongoDB**, **Eureka Server**, and **all 6 microservices** with health checks, proper startup dependencies, and isolated bridge networking (`hireflow-network`):
+
+```bash
+# Start all services in the background (detached mode)
+docker compose up -d
+```
+
+Check the status of all running containers:
+```bash
+docker compose ps
+```
+
+Follow real-time container logs:
+```bash
+# View logs from all services
+docker compose logs -f
+
+# Or follow logs from a specific service (e.g., eureka-server or user-service)
+docker compose logs -f eureka-server
+docker compose logs -f user-service
+```
+
+Stop and remove all containers and networks:
+```bash
+docker compose down
+
+# To also remove MongoDB database volume (clean reset):
+docker compose down -v
+```
+
+##### Option B: Run All Microservices in a Single Docker Container
+
+If you already have MongoDB running on your host machine (or on port 27017) and want to run the entire HireFlow Spring Boot application suite inside a single container:
+
+```bash
+# Run all services inside a single container
+docker run -d \
+  --name hireflow-app \
+  -p 8080:8080 \
+  -p 8761:8761 \
+  -p 8081:8081 \
+  -p 8082:8082 \
+  -p 8083:8083 \
+  -p 8084:8084 \
+  -p 8085:8085 \
+  -p 8086:8086 \
+  -e SPRING_DATA_MONGODB_URI=mongodb://host.docker.internal:27017/ \
+  hireflow:latest
+```
+
+View logs:
+```bash
+docker logs -f hireflow-app
+```
+
+Stop and remove the container:
+```bash
+docker stop hireflow-app
+docker rm hireflow-app
+```
+
+##### Option C: Run Individual Microservice Containers
+
+You can create a container for any specific microservice from the `hireflow:latest` image by passing the service name as an argument or via the `SERVICE_NAME` environment variable:
+
+```bash
+# 1. Create a shared Docker network
+docker network create hireflow-net
+
+# 2. Start MongoDB
+docker run -d --name mongodb --network hireflow-net -p 27017:27017 mongo:7.0
+
+# 3. Start Eureka Server
+docker run -d --name eureka-server --network hireflow-net -p 8761:8761 hireflow:latest eureka-server
+
+# 4. Start API Gateway
+docker run -d --name api-gateway --network hireflow-net -p 8080:8080 \
+  -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/ \
+  hireflow:latest api-gateway
+
+# 5. Start User Service
+docker run -d --name user-service --network hireflow-net -p 8081:8081 \
+  -e SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/user_db \
+  -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/ \
+  hireflow:latest user-service
+
+# 5. Start Company & Job Service
+docker run -d --name company-job-service --network hireflow-net -p 8082:8082 \
+  -e SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/company_job_db \
+  -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/ \
+  hireflow:latest company-job-service
+
+# 6. Start Candidate Service
+docker run -d --name candidate-service --network hireflow-net -p 8083:8083 \
+  -e SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/candidate_db \
+  -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/ \
+  hireflow:latest candidate-service
+
+# 7. Start Application Service
+docker run -d --name application-service --network hireflow-net -p 8084:8084 \
+  -e SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/application_db \
+  -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/ \
+  hireflow:latest application-service
+
+# 8. Start Interview Service
+docker run -d --name interview-service --network hireflow-net -p 8085:8085 \
+  -e SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/interview_db \
+  -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/ \
+  hireflow:latest interview-service
+
+# 9. Start Notification Service
+docker run -d --name notification-service --network hireflow-net -p 8086:8086 \
+  -e SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/notification_db \
+  -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/ \
+  hireflow:latest notification-service
+```
+
+---
+
+#### Step 3: Verify the Running Containers
+
+Once the containers are running:
+
+1. **Eureka Server Dashboard**: Open [http://localhost:8761](http://localhost:8761). You will see all 6 microservices (`USER-SERVICE`, `COMPANY-JOB-SERVICE`, `CANDIDATE-SERVICE`, `APPLICATION-SERVICE`, `INTERVIEW-SERVICE`, `NOTIFICATION-SERVICE`) registered and marked as `UP`.
+2. **Swagger UI (Interactive API Documentation)**:
+   - User Service: [http://localhost:8081/swagger-ui/index.html](http://localhost:8081/swagger-ui/index.html)
+   - Company & Job Service: [http://localhost:8082/swagger-ui/index.html](http://localhost:8082/swagger-ui/index.html)
+   - Candidate Service: [http://localhost:8083/swagger-ui/index.html](http://localhost:8083/swagger-ui/index.html)
+   - Application Service: [http://localhost:8084/swagger-ui/index.html](http://localhost:8084/swagger-ui/index.html)
+   - Interview Service: [http://localhost:8085/swagger-ui/index.html](http://localhost:8085/swagger-ui/index.html)
+   - Notification Service: [http://localhost:8086/swagger-ui/index.html](http://localhost:8086/swagger-ui/index.html)
+
+---
+
+### Method 2: Running Locally (Manual / Without Docker)
+
+If you prefer to run services directly on your host machine:
+
+#### Prerequisites
 
 1. **Java 17** or later installed
-2. **Maven 3.9+** installed (or use Maven Wrapper if provided)
+2. **Maven 3.9+** installed
 3. **MongoDB** running locally on `localhost:27017`
 
-### Startup Order
+#### Startup Order
 
-> **Important:** The Eureka Server should be running before the microservices start so that the services can register with the registry.
+> **Important:** The Eureka Server must be running before the microservices start so that the services can register with the registry.
 
 **Step 1: Start MongoDB**
 
@@ -238,7 +461,7 @@ cd eureka-server
 mvn spring-boot:run
 ```
 
-Wait for the Eureka Server to start. Verify by opening http://localhost:8761 in a browser.
+Wait for the Eureka Server to start. Verify by opening [http://localhost:8761](http://localhost:8761) in a browser.
 
 **Step 3: Start All Microservices**
 
@@ -272,13 +495,72 @@ mvn spring-boot:run
 
 **Step 4: Verify Eureka Registration**
 
-Open http://localhost:8761 — all six services should appear as registered instances.
+Open [http://localhost:8761](http://localhost:8761) — all six services should appear as registered instances.
 
 **Step 5: Access Swagger UI**
 
-Open any service's Swagger UI (e.g., http://localhost:8081/swagger-ui/index.html) to view and test the APIs interactively.
+Open any service's Swagger UI (e.g., [http://localhost:8081/swagger-ui/index.html](http://localhost:8081/swagger-ui/index.html)) to view and test the APIs interactively.
+
 
 ---
+
+---
+
+## Automated CI/CD Pipeline (Jenkins)
+
+HireFlow AI includes a complete declarative **End-to-End CI/CD Pipeline** defined in [`Jenkinsfile`](./Jenkinsfile).
+
+### Pipeline Workflow:
+
+```
+  [Source Code Change]
+          │
+          ▼ (Webhook / SCM Poll every 5m)
+┌───────────────────┐
+│ 1. SCM Checkout   │  Pulls latest code from GitHub repository
+└─────────┬─────────┘
+          │
+          ▼
+┌───────────────────┐
+│ 2. Test & Compile │  Builds & verifies all services via clean Maven Docker container
+└─────────┬─────────┘
+          │
+          ▼
+┌───────────────────┐
+│ 3. Docker Build   │  Packages all 7 microservices + API Gateway into hireflow:latest & hireflow:${BUILD_NUMBER}
+└─────────┬─────────┘
+          │
+          ▼
+┌───────────────────┐
+│ 4. Deploy Fresh   │  Tears down old instances and spins up fresh container stack via docker compose
+└─────────┬─────────┘
+          │
+          ▼
+┌───────────────────┐
+│ 5. Push to GitHub │  Automatically pushes changes/tags to GitHub once all tests & deployment pass
+└───────────────────┘
+```
+
+### Port Allocation:
+- **Jenkins Dashboard**: `http://localhost:8080/` (Running as host Windows Service)
+- **API Gateway**: `http://localhost:8088/` (Mapped to host port 8088 in Compose to avoid clash with Jenkins)
+- **Eureka Server**: `http://localhost:8761/`
+- **Microservices**: `8081` – `8086`
+
+### Setting Up the Pipeline in Jenkins:
+1. Open the Jenkins Web Dashboard: **[http://localhost:8080](http://localhost:8080)**
+2. Click **New Item** $ightarrow$ Enter item name: `HireFlow-CI-CD` $ightarrow$ Select **Pipeline** $ightarrow$ Click **OK**.
+3. Under **Build Triggers**:
+   - Check **GitHub hook trigger for GITScm polling** (for instant push triggers via webhook).
+   - Check **Poll SCM** with schedule: `H/5 * * * *` (checks every 5 minutes).
+4. Under **Pipeline**:
+   - Definition: **Pipeline script from SCM**
+   - SCM: **Git**
+   - Repository URL: `https://github.com/Pratham-Parmar-37/hireflow.git`
+   - Credentials: Select your GitHub credentials (or add via *Add $ightarrow$ Jenkins* with ID `github-credentials`)
+   - Branch Specifier: `*/main`
+   - Script Path: `Jenkinsfile`
+5. Click **Save** and click **Build Now** to execute the pipeline!
 
 ## API Summary
 
@@ -465,6 +747,11 @@ curl -X POST http://localhost:8086/api/notifications \
 
 ```
 HireFlow/
+├── Jenkinsfile                     (Declarative CI/CD pipeline script)
+├── Dockerfile                      (Multi-stage build for all microservices)
+├── docker-compose.yml              (Full-stack compose orchestration with MongoDB)
+├── entrypoint.sh                   (Container startup script & process manager)
+├── .dockerignore                   (Docker build exclusions)
 ├── .gitignore
 ├── README.md
 ├── notes/                          (PDF reference notes - gitignored)
@@ -474,6 +761,12 @@ HireFlow/
 │   ├── pom.xml
 │   └── src/main/java/com/hireflow/eurekaserver/
 │       └── EurekaServerApplication.java
+│
+├── api-gateway/
+│   ├── README.md
+│   ├── pom.xml
+│   └── src/main/java/com/hireflow/apigateway/
+│       └── ApiGatewayApplication.java
 │
 ├── user-service/
 │   ├── README.md
@@ -541,6 +834,7 @@ HireFlow/
 │   └── src/main/java/com/hireflow/notificationservice/
 │       ├── NotificationServiceApplication.java
 │       ├── config/OpenApiConfig.java
+
 │       ├── controller/NotificationController.java
 │       ├── service/NotificationService.java
 │       ├── repository/NotificationRepository.java
@@ -561,8 +855,9 @@ The following features are **intentionally NOT implemented** in Phase 2:
 - ❌ AI/ML resume processing
 - ❌ File upload/storage
 - ❌ Email/SMS notifications (service only stores records)
-- ❌ API Gateway
-- ❌ Docker / Kubernetes
+- ✅ API Gateway (Implemented via Spring Cloud Gateway on port 8080)
+- ✅ Docker & Docker Compose containerization (Implemented)
+- ❌ Kubernetes orchestration (Planned for future phases)
 - ❌ Kafka / RabbitMQ (async messaging)
 - ❌ Redis caching
 - ❌ Frontend / React
@@ -589,3 +884,8 @@ These features may be implemented in future phases.
 | Inter-service Communication | OpenFeign (Application Service → Job Service via Eureka) |
 | Swagger/OpenAPI | Interactive API documentation for all services |
 | Loosely Coupled Services | No cross-database access, only HTTP communication |
+| Docker Containerization | Multi-stage Dockerfile packaging all services into an Alpine JRE runtime |
+| API Gateway & Routing | Spring Cloud Gateway with reactive routing (lb://) via Eureka on port 8080 |
+| CI/CD Pipeline | End-to-End automated build, test, Docker deploy, and Git push via Jenkins |
+| Docker Compose Orchestration | Multi-container compose stack with MongoDB, Eureka, and health-checked dependencies |
+
