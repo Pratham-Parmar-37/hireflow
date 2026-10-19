@@ -1,3 +1,5 @@
+name: hireflow
+
 services:
   # ----------------------------------------------------------------------------
   # Shared MongoDB Instance (Hosts 6 isolated databases per service)

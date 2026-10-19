@@ -16,13 +16,15 @@ pipeline {
     }
 
     triggers {
-        // Automatically check for GitHub repository changes every 5 minutes
-        pollSCM('H/5 * * * *')
+        // Automatically check for GitHub repository changes every 1 minute
+        pollSCM('* * * * *')
         // Automatically trigger when a GitHub Webhook ping is received
         githubPush()
     }
 
     options {
+        // Prevent simultaneous parallel builds from colliding on ports/containers
+        disableConcurrentBuilds()
         buildDiscarder(logRotator(numToKeepStr: '10'))
         timeout(time: 30, unit: 'MINUTES')
         timestamps()
@@ -94,14 +96,14 @@ pipeline {
                 echo '=== [Stage 4/5] Stopping old containers and launching fresh deployment ==='
                 script {
                     if (isUnix()) {
-                        sh 'docker compose down || true'
-                        sh 'docker compose up -d'
+                        sh 'docker compose -p hireflow down || true'
+                        sh 'docker compose -p hireflow up -d'
                         sh 'sleep 20'
-                        sh 'docker compose ps'
+                        sh 'docker compose -p hireflow ps'
                     } else {
-                        bat 'docker compose down || ver > nul'
-                        bat 'docker compose up -d'
-                        bat 'powershell -Command "Start-Sleep -Seconds 20; docker compose ps"'
+                        bat 'docker compose -p hireflow down || ver > nul'
+                        bat 'docker compose -p hireflow up -d'
+                        bat 'powershell -Command "Start-Sleep -Seconds 20; docker compose -p hireflow ps"'
                     }
                 }
             }
