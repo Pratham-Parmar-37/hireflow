@@ -32,6 +32,7 @@ const state = {
 // Initialization
 // ==============================================================================
 document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
   initTabs();
   initModals();
   initSearchAndFilters();
@@ -41,13 +42,52 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==============================================================================
+// Theme Orchestration (Crisp Light default + Linear Dark)
+// ==============================================================================
+function initTheme() {
+  const saved = localStorage.getItem('hireflow-theme') || 'light';
+  applyTheme(saved);
+
+  const toggleBtn = document.getElementById('theme-toggle-btn');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+      const next = current === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+      localStorage.setItem('hireflow-theme', next);
+    });
+  }
+}
+
+function applyTheme(theme) {
+  const icon = document.getElementById('theme-icon');
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    if (icon) icon.textContent = '☀️';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    if (icon) icon.textContent = '🌙';
+  }
+}
+
+// ==============================================================================
 // Navigation Tabs
 // ==============================================================================
 function initTabs() {
-  const tabs = document.querySelectorAll('.nav-tab');
-  tabs.forEach(tab => {
+  const tabButtons = document.querySelectorAll('.nav-item[data-tab]');
+  const titleMap = {
+    'tab-overview': 'Overview',
+    'tab-jobs': 'Job Openings',
+    'tab-candidates': 'Candidate Directory',
+    'tab-pipeline': 'Hiring Pipeline',
+    'tab-interviews': 'Interviews',
+    'tab-companies': 'Companies & Team',
+    'tab-architecture': 'Eureka Topology'
+  };
+
+  tabButtons.forEach(tab => {
     tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
+      tabButtons.forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
 
       tab.classList.add('active');
@@ -55,13 +95,18 @@ function initTabs() {
       if (targetPane) {
         targetPane.classList.add('active');
       }
+
+      const titleEl = document.getElementById('current-view-title');
+      if (titleEl && titleMap[tab.dataset.tab]) {
+        titleEl.textContent = titleMap[tab.dataset.tab];
+      }
     });
   });
 
   const homeBtn = document.getElementById('brand-home-btn');
   if (homeBtn) {
     homeBtn.addEventListener('click', () => {
-      document.querySelector('.nav-tab[data-tab="tab-overview"]').click();
+      document.querySelector('.nav-item[data-tab="tab-overview"]')?.click();
     });
   }
 }
@@ -206,18 +251,15 @@ function renderServiceHealth() {
   if (!container) return;
 
   container.innerHTML = state.serviceHealth.map(s => `
-    <div class="service-card">
-      <div class="service-card-top">
-        <div class="service-title-group">
-          <span class="service-indicator-dot ${s.status === 'healthy' ? '' : 'down'}"></span>
-          <span class="service-name">${s.name}</span>
-        </div>
-        <span class="service-port">:${s.port}</span>
+    <div class="service-row">
+      <div class="service-row-left">
+        <span class="status-dot-indicator ${s.status === 'healthy' ? '' : 'down'}"></span>
+        <span class="service-row-name">${escapeHtml(s.name)}</span>
+        <span class="service-row-port">:${s.port}</span>
       </div>
-      <p class="service-desc">${s.desc}</p>
-      <div class="service-card-bottom">
-        <span class="service-framework-tag">${s.tech}</span>
-        <span>${s.latency}</span>
+      <div class="service-row-right">
+        <span class="service-framework-tag">${escapeHtml(s.tech)}</span>
+        <span class="latency-pill">${s.latency}</span>
       </div>
     </div>
   `).join('');
@@ -244,8 +286,6 @@ function updateKPIs() {
 // ==============================================================================
 function renderJobs() {
   const container = document.getElementById('jobs-container');
-  if (!container) return;
-
   const search = (document.getElementById('job-search-input')?.value || '').toLowerCase();
   const typeFilter = document.getElementById('job-type-filter')?.value || '';
   const statusFilter = document.getElementById('job-status-filter')?.value || '';
@@ -260,48 +300,72 @@ function renderJobs() {
     return matchesSearch && matchesType && matchesStatus;
   });
 
-  if (filtered.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state" style="grid-column: 1 / -1;">
-        <p>No job postings match your filters. Click 'Post Job Opening' or 'Seed Demo Data'.</p>
-      </div>
-    `;
-    return;
+  if (container) {
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state" style="grid-column: 1 / -1;">
+          <p>No job postings match your filters. Click 'Post Job Opening' or 'Seed Sample Data'.</p>
+        </div>
+      `;
+    } else {
+      container.innerHTML = filtered.map(job => {
+        const company = state.companies.find(c => c.id === job.companyId) || { companyName: 'Hiring Partner' };
+        const isOpen = (job.status || 'OPEN') === 'OPEN';
+
+        return `
+          <div class="job-card">
+            <div class="job-card-top">
+              <div>
+                <h3 class="job-title">${escapeHtml(job.title)}</h3>
+                <div class="job-company">${escapeHtml(company.companyName)}</div>
+              </div>
+              <span class="badge ${isOpen ? 'badge-open' : 'badge-neutral'}">${escapeHtml(job.status || 'OPEN')}</span>
+            </div>
+
+            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+              <span class="badge badge-neutral">${escapeHtml(job.employmentType || 'FULL_TIME')}</span>
+              <span class="badge badge-neutral">${escapeHtml(job.experienceRequired || '1-3 years')}</span>
+            </div>
+
+            <p class="job-desc">${escapeHtml(job.description || 'Engineering role within our distributed microservices platform.')}</p>
+
+            <div class="job-card-bottom">
+              <div>
+                <div class="job-salary">${escapeHtml(job.salary || 'Competitive')}</div>
+                <span style="font-size: 0.685rem; color: var(--text-tertiary); font-family: var(--font-mono);">${job.id ? job.id.substring(0, 8) : ''}</span>
+              </div>
+              <button class="btn btn-secondary" onclick="openApplyForJob('${job.id}')" style="padding: 0.35rem 0.75rem; font-size: 0.75rem;">
+                Apply
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
   }
 
-  container.innerHTML = filtered.map(job => {
-    const company = state.companies.find(c => c.id === job.companyId) || { companyName: 'Hiring Partner' };
-    const isOpen = job.status === 'OPEN';
-
-    return `
-      <div class="job-card">
-        <div class="job-card-header">
-          <div>
-            <h3 class="job-title">${escapeHtml(job.title)}</h3>
-            <div class="job-company">${escapeHtml(company.companyName)}</div>
+  // Also populate the Overview summary list
+  const overviewRecent = document.getElementById('overview-recent-jobs');
+  if (overviewRecent) {
+    if (state.jobs.length === 0) {
+      overviewRecent.innerHTML = `<div class="empty-state"><p>No open requisitions found. Click "Post Job Opening" or "Seed Sample Data".</p></div>`;
+    } else {
+      overviewRecent.innerHTML = state.jobs.slice(0, 4).map(job => {
+        const company = state.companies.find(c => c.id === job.companyId) || { companyName: 'Hiring Partner' };
+        return `
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-subtle);">
+            <div>
+              <div style="font-weight: 600; font-size: 0.85rem; color: var(--text-primary);">${escapeHtml(job.title)}</div>
+              <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.15rem;">
+                ${escapeHtml(company.companyName)} &bull; <span class="badge badge-neutral" style="padding: 0.1rem 0.35rem; font-size: 0.65rem;">${escapeHtml(job.employmentType || 'FULL_TIME')}</span>
+              </div>
+            </div>
+            <button class="btn btn-secondary" onclick="openApplyForJob('${job.id}')" style="padding: 0.25rem 0.65rem; font-size: 0.75rem;">Apply</button>
           </div>
-          <span class="tag ${isOpen ? 'tag-success' : ''}">${job.status || 'OPEN'}</span>
-        </div>
-
-        <div class="job-tags-row">
-          <span class="tag tag-neutral">${job.employmentType || 'FULL_TIME'}</span>
-          <span class="tag tag-neutral">${escapeHtml(job.experienceRequired || '1-3 years')}</span>
-        </div>
-
-        <p class="job-desc">${escapeHtml(job.description || 'Engineering role within our distributed microservices platform.')}</p>
-
-        <div class="job-footer">
-          <div>
-            <div class="job-salary-text">${escapeHtml(job.salary || 'Competitive')}</div>
-            <span style="font-size: 0.7rem; color: var(--text-tertiary); font-family: var(--font-mono);">${job.id?.substring(0, 8)}</span>
-          </div>
-          <button class="btn btn-secondary" onclick="openApplyForJob('${job.id}')" style="padding: 0.35rem 0.75rem; font-size: 0.75rem;">
-            Apply
-          </button>
-        </div>
-      </div>
-    `;
-  }).join('');
+        `;
+      }).join('');
+    }
+  }
 }
 
 // ==============================================================================
@@ -353,12 +417,12 @@ function renderCandidates() {
           ${escapeHtml(c.education || 'Computer Science')} &bull; ${escapeHtml(c.experience || '3 years')}
         </div>
 
-        <div class="candidate-skills-list">
-          ${skills.map(s => `<span class="skill-pill">${escapeHtml(s)}</span>`).join('')}
+        <div class="candidate-skills">
+          ${skills.map(s => `<span class="skill-chip">${escapeHtml(s)}</span>`).join('')}
         </div>
 
         <div style="display: flex; gap: 0.5rem; margin-top: auto; border-top: 1px solid var(--border-subtle); padding-top: 0.75rem;">
-          <a href="${c.resumeUrl || '#'}" target="_blank" class="btn btn-ghost" style="flex: 1; padding: 0.35rem; font-size: 0.75rem;">
+          <a href="${c.resumeUrl || '#'}" target="_blank" class="btn btn-ghost" style="flex: 1; padding: 0.35rem; font-size: 0.75rem; text-align: center;">
             Resume
           </a>
           <button class="btn btn-secondary" onclick="openApplyForCandidate('${c.id}')" style="flex: 1; padding: 0.35rem; font-size: 0.75rem;">
@@ -399,7 +463,7 @@ function renderPipeline() {
           <div class="pipeline-card-job">${escapeHtml(job.title)}</div>
           <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.725rem; color: var(--text-tertiary);">
             <span>${escapeHtml(app.applicationDate || 'Recent')}</span>
-            <span style="color: #60a5fa;">Feign /with-job</span>
+            <span style="color: var(--primary);">Feign /with-job</span>
           </div>
           <div style="margin-top: 0.35rem;" onclick="event.stopPropagation();">
             <select class="pipeline-status-select" onchange="updateApplicationStatus('${app.id}', this.value)">
@@ -435,12 +499,12 @@ function renderInterviews() {
       <div class="interview-card">
         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
           <div>
-            <h3 style="font-family: var(--font-display); font-size: 0.975rem; color: #fff; font-weight: 600;">
+            <h3 style="font-family: var(--font-display); font-size: 0.95rem; color: var(--text-primary); font-weight: 600;">
               ${escapeHtml(candidate.fullName)}
             </h3>
-            <span style="font-size: 0.75rem; color: #a78bfa;">${i.interviewType || 'ONLINE'}</span>
+            <span class="badge badge-neutral" style="margin-top: 0.25rem;">${escapeHtml(i.interviewType || 'ONLINE')}</span>
           </div>
-          <span class="tag tag-neutral">${escapeHtml(i.interviewDate || 'Upcoming')}</span>
+          <span class="badge badge-neutral">${escapeHtml(i.interviewDate || 'Upcoming')}</span>
         </div>
 
         <p style="font-size: 0.785rem; color: var(--text-secondary); line-height: 1.45;">
@@ -448,8 +512,8 @@ function renderInterviews() {
         </p>
 
         <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 0.65rem; font-size: 0.725rem; color: var(--text-tertiary);">
-          <span>Status: <strong style="color: #34d399;">${i.status || 'SCHEDULED'}</strong></span>
-          <span style="font-family: var(--font-mono);">${i.applicationId?.substring(0, 8)}</span>
+          <span>Status: <strong style="color: var(--success);">${escapeHtml(i.status || 'SCHEDULED')}</strong></span>
+          <span style="font-family: var(--font-mono);">${i.applicationId ? i.applicationId.substring(0, 8) : ''}</span>
         </div>
       </div>
     `;
@@ -471,10 +535,10 @@ function renderCompanies() {
   container.innerHTML = state.companies.map(c => `
     <div class="company-card">
       <div class="company-title">${escapeHtml(c.companyName)}</div>
-      <div style="font-size: 0.75rem; color: #60a5fa;">${escapeHtml(c.industry || 'Technology')} &bull; ${escapeHtml(c.location || 'Remote')}</div>
-      <p style="font-size: 0.785rem; color: var(--text-secondary);">${escapeHtml(c.description || 'Enterprise partner in the HireFlow network.')}</p>
+      <div style="font-size: 0.75rem; color: var(--primary); font-weight: 500;">${escapeHtml(c.industry || 'Technology')} &bull; ${escapeHtml(c.location || 'Remote')}</div>
+      <p style="font-size: 0.785rem; color: var(--text-secondary); line-height: 1.45;">${escapeHtml(c.description || 'Enterprise partner in the HireFlow network.')}</p>
       <a href="${c.website || '#'}" target="_blank" class="company-link">
-        ${escapeHtml(c.website || 'https://example.com')}
+        ${escapeHtml(c.website || 'https://example.com')} &rarr;
       </a>
     </div>
   `).join('');
@@ -494,7 +558,7 @@ function renderUsers() {
       <div class="company-title">${escapeHtml(u.fullName)}</div>
       <div style="font-size: 0.75rem; color: var(--text-secondary);">${escapeHtml(u.email)}</div>
       <div style="margin-top: 0.35rem;">
-        <span class="tag tag-neutral">${escapeHtml(u.role || 'USER')}</span>
+        <span class="badge badge-neutral">${escapeHtml(u.role || 'USER')}</span>
       </div>
     </div>
   `).join('');

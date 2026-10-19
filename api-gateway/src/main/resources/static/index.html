@@ -3,399 +3,433 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HireFlow – Talent Acquisition & Pipeline Management</title>
-  <meta name="description" content="HireFlow is an enterprise recruitment orchestration platform powered by Spring Cloud microservices, automated pipelines, and unified service discovery.">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232563eb'><rect width='24' height='24' rx='6'/><path d='M7 6v12M17 6v12M7 12h10' stroke='white' stroke-width='2.5' stroke-linecap='round'/></svg>">
+  <title>HireFlow – Enterprise Talent Acquisition & Pipeline</title>
+  <meta name="description" content="HireFlow is a modern recruitment orchestration platform powered by Spring Cloud microservices, unified service discovery, and automated pipelines.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231d4ed8'><rect width='24' height='24' rx='6'/><path d='M7 6v12M17 6v12M7 12h10' stroke='white' stroke-width='2.5' stroke-linecap='round'/></svg>">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-  <div class="app-container">
-    <!-- Navbar Header -->
-    <header class="navbar">
-      <div class="brand" id="brand-home-btn">
-        <div class="brand-icon-emblem">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M6 5V19M18 5V19M6 12H18" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round"/>
-            <circle cx="18" cy="12" r="2.5" fill="#60a5fa"/>
-          </svg>
+  <div class="app-wrapper">
+    <!-- Left Navigation Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-brand" id="brand-home-btn">
+          <div class="sidebar-logo">H</div>
+          <span class="sidebar-brand-name">HireFlow</span>
         </div>
-        <div class="brand-text-wrap">
-          <div class="brand-title-row">
-            <span class="brand-title">HireFlow</span>
-            <span class="brand-badge">Enterprise</span>
-          </div>
-          <span class="brand-subtitle">Talent Acquisition & Pipeline Management</span>
-        </div>
+        <span class="sidebar-workspace-pill">v2.0</span>
       </div>
 
-      <div class="nav-actions">
-        <div class="status-indicator-pill">
-          <span class="status-dot"></span>
-          <span>Gateway Active :8088</span>
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Recruitment</div>
+        
+        <button class="nav-item active" data-tab="tab-overview">
+          <div class="nav-item-left">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            <span>Overview</span>
+          </div>
+        </button>
+
+        <button class="nav-item" data-tab="tab-jobs">
+          <div class="nav-item-left">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+            <span>Job Openings</span>
+          </div>
+          <span class="nav-counter" id="badge-jobs-count">0</span>
+        </button>
+
+        <button class="nav-item" data-tab="tab-candidates">
+          <div class="nav-item-left">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+            <span>Candidate Pool</span>
+          </div>
+          <span class="nav-counter" id="badge-candidates-count">0</span>
+        </button>
+
+        <button class="nav-item" data-tab="tab-pipeline">
+          <div class="nav-item-left">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+            <span>Pipeline</span>
+          </div>
+          <span class="nav-counter" id="badge-applications-count">0</span>
+        </button>
+
+        <button class="nav-item" data-tab="tab-interviews">
+          <div class="nav-item-left">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line></svg>
+            <span>Interviews</span>
+          </div>
+          <span class="nav-counter" id="badge-interviews-count">0</span>
+        </button>
+
+        <div class="nav-section-label" style="margin-top: 0.75rem;">Platform</div>
+
+        <button class="nav-item" data-tab="tab-companies">
+          <div class="nav-item-left">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path></svg>
+            <span>Companies & Team</span>
+          </div>
+        </button>
+
+        <button class="nav-item" data-tab="tab-architecture">
+          <div class="nav-item-left">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <span>Eureka Topology</span>
+          </div>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-status-box">
+          <div><span class="status-dot-green"></span>Gateway :8088</div>
+          <a href="http://localhost:8761" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 500;">Eureka &rarr;</a>
         </div>
 
-        <button class="btn btn-secondary" id="seed-demo-btn" title="Populate database with sample companies, jobs, candidates and applications">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-          Seed Demo Data
-        </button>
-
-        <button class="btn btn-ghost" id="refresh-all-btn" title="Refresh all data">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-          Refresh
-        </button>
-
-        <button class="btn btn-icon" id="notifications-toggle-btn" title="Notifications">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-          <span class="icon-badge" id="notif-badge" style="display: none;">0</span>
-        </button>
+        <div class="sidebar-user-row">
+          <div class="user-profile-badge">
+            <div class="user-avatar-sm">PP</div>
+            <div>
+              <div class="user-info-text">Pratham Parmar</div>
+              <div class="user-role-text">Recruiter Admin</div>
+            </div>
+          </div>
+          <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle Light / Dark Mode">
+            <span id="theme-icon">🌙</span>
+          </button>
+        </div>
       </div>
-    </header>
+    </aside>
 
-    <!-- Navigation Tabs -->
-    <nav class="nav-tabs-wrapper">
-      <button class="nav-tab active" data-tab="tab-overview">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-        Overview
-      </button>
-
-      <button class="nav-tab" data-tab="tab-jobs">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
-        Job Openings
-        <span class="nav-tab-badge" id="badge-jobs-count">0</span>
-      </button>
-
-      <button class="nav-tab" data-tab="tab-candidates">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-        Candidate Pool
-        <span class="nav-tab-badge" id="badge-candidates-count">0</span>
-      </button>
-
-      <button class="nav-tab" data-tab="tab-pipeline">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-        Pipeline
-        <span class="nav-tab-badge" id="badge-applications-count">0</span>
-      </button>
-
-      <button class="nav-tab" data-tab="tab-interviews">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-        Interviews
-        <span class="nav-tab-badge" id="badge-interviews-count">0</span>
-      </button>
-
-      <button class="nav-tab" data-tab="tab-companies">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path><path d="M9 9h1"></path><path d="M9 13h1"></path><path d="M9 17h1"></path><path d="M14 9h1"></path><path d="M14 13h1"></path><path d="M14 17h1"></path></svg>
-        Companies & Users
-      </button>
-
-      <button class="nav-tab" data-tab="tab-architecture">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-        Topology
-      </button>
-    </nav>
-
-    <!-- Main Content Area -->
-    <main class="main-content">
-      <!-- ============================================================== -->
-      <!-- TAB 1: OVERVIEW                                                -->
-      <!-- ============================================================== -->
-      <section id="tab-overview" class="tab-pane active">
-        <div class="section-header">
-          <div>
-            <h1 class="section-title">Operations & Metrics</h1>
-            <p class="section-desc">Real-time status of distributed microservices, talent metrics, and live Eureka routing.</p>
-          </div>
-          <div>
-            <a href="http://localhost:8761" target="_blank" class="btn btn-secondary">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-              Eureka Console (:8761)
-            </a>
-          </div>
+    <!-- Main Content Stage -->
+    <main class="main-stage">
+      <!-- Top Action Bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <span class="breadcrumb-label">HireFlow /</span>
+          <span class="breadcrumb-active" id="current-view-title">Overview</span>
         </div>
 
-        <!-- KPI Grid -->
-        <div class="kpi-grid">
-          <div class="kpi-card">
-            <div class="kpi-header">
-              <span class="kpi-title">Active Positions</span>
-              <div class="kpi-icon-wrap">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+        <div class="topbar-actions">
+          <button class="btn btn-secondary" id="seed-demo-btn" title="Populate database with sample realistic recruitment data">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            Seed Sample Data
+          </button>
+
+          <button class="btn btn-ghost" id="refresh-all-btn" title="Refresh all microservices data">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            Refresh
+          </button>
+
+          <button class="btn btn-icon" id="notifications-toggle-btn" title="Notifications">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            <span class="icon-badge" id="notif-badge" style="display: none;">0</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Content Workspace -->
+      <div class="content-workspace">
+        <!-- ============================================================ -->
+        <!-- VIEW 1: OVERVIEW                                             -->
+        <!-- ============================================================ -->
+        <section id="tab-overview" class="tab-pane active">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Talent Operations Overview</h1>
+              <p class="view-desc">Live recruitment metrics, candidate pipeline health, and Eureka service telemetry.</p>
+            </div>
+          </div>
+
+          <!-- KPI Summary Cards -->
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-top">
+                <span class="kpi-label">Active Requisitions</span>
+                <div class="kpi-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                </div>
+              </div>
+              <div class="kpi-value" id="kpi-jobs">0</div>
+              <div class="kpi-subtext">Open job postings</div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-top">
+                <span class="kpi-label">Candidate Directory</span>
+                <div class="kpi-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                </div>
+              </div>
+              <div class="kpi-value" id="kpi-candidates">0</div>
+              <div class="kpi-subtext">Verified talent profiles</div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-top">
+                <span class="kpi-label">Active Applications</span>
+                <div class="kpi-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                </div>
+              </div>
+              <div class="kpi-value" id="kpi-applications">0</div>
+              <div class="kpi-subtext">In hiring workflow</div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-top">
+                <span class="kpi-label">Interviews Scheduled</span>
+                <div class="kpi-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line></svg>
+                </div>
+              </div>
+              <div class="kpi-value" id="kpi-interviews">0</div>
+              <div class="kpi-subtext">Upcoming rounds</div>
+            </div>
+          </div>
+
+          <!-- Two-Column Workspace -->
+          <div class="overview-layout">
+            <!-- Left: Highlights & Quick Management -->
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+              <div class="panel-card">
+                <div class="panel-header">
+                  <span class="panel-title">Active Hiring Positions</span>
+                  <button class="btn btn-primary" onclick="document.querySelector('[data-tab=\'tab-jobs\']').click()" style="padding: 0.35rem 0.65rem; font-size: 0.75rem;">View All Roles</button>
+                </div>
+                <div class="panel-body" id="overview-recent-jobs">
+                  <div class="empty-state"><p>Loading active job postings...</p></div>
+                </div>
               </div>
             </div>
-            <div class="kpi-value" id="kpi-jobs">0</div>
-            <div class="kpi-subtext">Open job requisitions</div>
-          </div>
 
-          <div class="kpi-card">
-            <div class="kpi-header">
-              <span class="kpi-title">Candidate Pool</span>
-              <div class="kpi-icon-wrap">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+            <!-- Right: Service Telemetry -->
+            <div class="panel-card">
+              <div class="panel-header">
+                <span class="panel-title">Cluster Telemetry</span>
+                <span class="badge badge-open">All 8 Online</span>
+              </div>
+              <div class="panel-body">
+                <div class="service-list" id="services-health-grid">
+                  <!-- Populated by JS -->
+                </div>
               </div>
             </div>
-            <div class="kpi-value" id="kpi-candidates">0</div>
-            <div class="kpi-subtext">Verified candidate profiles</div>
+          </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- VIEW 2: JOB OPENINGS                                         -->
+        <!-- ============================================================ -->
+        <section id="tab-jobs" class="tab-pane">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Job Openings</h1>
+              <p class="view-desc">Create and manage published job listings across hiring partners.</p>
+            </div>
+            <div>
+              <button class="btn btn-primary" id="open-post-job-modal-btn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Post Job Opening
+              </button>
+            </div>
           </div>
 
-          <div class="kpi-card">
-            <div class="kpi-header">
-              <span class="kpi-title">Applications</span>
-              <div class="kpi-icon-wrap">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+          <div class="filter-row">
+            <div class="search-box">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input type="text" id="job-search-input" class="search-input" placeholder="Search by role title, department or skill...">
+            </div>
+            <select id="job-type-filter" class="filter-select">
+              <option value="">All Employment Types</option>
+              <option value="FULL_TIME">Full Time</option>
+              <option value="REMOTE">Remote</option>
+              <option value="CONTRACT">Contract</option>
+            </select>
+            <select id="job-status-filter" class="filter-select">
+              <option value="">All Statuses</option>
+              <option value="OPEN">Open Only</option>
+              <option value="CLOSED">Closed Only</option>
+            </select>
+          </div>
+
+          <div class="jobs-grid" id="jobs-container"></div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- VIEW 3: CANDIDATE POOL                                       -->
+        <!-- ============================================================ -->
+        <section id="tab-candidates" class="tab-pane">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Candidate Talent Directory</h1>
+              <p class="view-desc">Profiles, technical skillsets, and resumes managed by Candidate Service.</p>
+            </div>
+            <div>
+              <button class="btn btn-primary" id="open-add-candidate-modal-btn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                Add Candidate
+              </button>
+            </div>
+          </div>
+
+          <div class="filter-row">
+            <div class="search-box">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input type="text" id="candidate-search-input" class="search-input" placeholder="Filter candidates by name, skillset or experience...">
+            </div>
+          </div>
+
+          <div class="candidates-grid" id="candidates-container"></div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- VIEW 4: HIRING PIPELINE (KANBAN)                             -->
+        <!-- ============================================================ -->
+        <section id="tab-pipeline" class="tab-pane">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Application Pipeline</h1>
+              <p class="view-desc">Track candidates through hiring stages with OpenFeign cross-service composition.</p>
+            </div>
+            <div>
+              <button class="btn btn-primary" id="open-apply-modal-btn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                Submit Application
+              </button>
+            </div>
+          </div>
+
+          <div class="pipeline-board">
+            <div class="pipeline-col" data-status="APPLIED">
+              <div class="pipeline-col-header">
+                <span class="pipeline-col-title">Applied</span>
+                <span class="pipeline-counter" id="count-APPLIED">0</span>
+              </div>
+              <div class="pipeline-cards-wrap" id="col-APPLIED"></div>
+            </div>
+
+            <div class="pipeline-col" data-status="UNDER_REVIEW">
+              <div class="pipeline-col-header">
+                <span class="pipeline-col-title">Under Review</span>
+                <span class="pipeline-counter" id="count-UNDER_REVIEW">0</span>
+              </div>
+              <div class="pipeline-cards-wrap" id="col-UNDER_REVIEW"></div>
+            </div>
+
+            <div class="pipeline-col" data-status="SHORTLISTED">
+              <div class="pipeline-col-header">
+                <span class="pipeline-col-title">Shortlisted</span>
+                <span class="pipeline-counter" id="count-SHORTLISTED">0</span>
+              </div>
+              <div class="pipeline-cards-wrap" id="col-SHORTLISTED"></div>
+            </div>
+
+            <div class="pipeline-col" data-status="OFFERED">
+              <div class="pipeline-col-header">
+                <span class="pipeline-col-title">Offered</span>
+                <span class="pipeline-counter" id="count-OFFERED">0</span>
+              </div>
+              <div class="pipeline-cards-wrap" id="col-OFFERED"></div>
+            </div>
+
+            <div class="pipeline-col" data-status="REJECTED">
+              <div class="pipeline-col-header">
+                <span class="pipeline-col-title">Rejected</span>
+                <span class="pipeline-counter" id="count-REJECTED">0</span>
+              </div>
+              <div class="pipeline-cards-wrap" id="col-REJECTED"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- VIEW 5: INTERVIEWS                                           -->
+        <!-- ============================================================ -->
+        <section id="tab-interviews" class="tab-pane">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Interview Coordination</h1>
+              <p class="view-desc">Schedule and manage technical and cultural assessment sessions.</p>
+            </div>
+            <div>
+              <button class="btn btn-primary" id="open-schedule-interview-modal-btn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line></svg>
+                Schedule Interview
+              </button>
+            </div>
+          </div>
+
+          <div class="interviews-grid" id="interviews-container"></div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- VIEW 6: COMPANIES & USERS                                    -->
+        <!-- ============================================================ -->
+        <section id="tab-companies" class="tab-pane">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Organizations & Team</h1>
+              <p class="view-desc">Registered partner companies and user access directory.</p>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn btn-secondary" id="open-add-company-modal-btn">Register Company</button>
+              <button class="btn btn-primary" id="open-add-user-modal-btn">Create User</button>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 2rem;">
+            <h3 style="font-family: var(--font-display); font-size: 1rem; color: var(--text-primary); margin-bottom: 0.85rem;">Partner Companies</h3>
+            <div class="companies-grid" id="companies-container"></div>
+          </div>
+
+          <div>
+            <h3 style="font-family: var(--font-display); font-size: 1rem; color: var(--text-primary); margin-bottom: 0.85rem;">Team Accounts</h3>
+            <div class="companies-grid" id="users-container"></div>
+          </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- VIEW 7: EUREKA TOPOLOGY                                      -->
+        <!-- ============================================================ -->
+        <section id="tab-architecture" class="tab-pane">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">System Architecture & Eureka Topology</h1>
+              <p class="view-desc">Distributed Spring Cloud architecture, dynamic reverse proxying, and Docker Compose stack.</p>
+            </div>
+            <div>
+              <a href="http://localhost:8761" target="_blank" class="btn btn-primary">
+                Open Eureka Dashboard (:8761)
+              </a>
+            </div>
+          </div>
+
+          <div class="panel-card" style="padding: 1.5rem; margin-bottom: 2rem;">
+            <h2 style="font-family: var(--font-display); font-size: 1.05rem; color: var(--text-primary); margin-bottom: 0.85rem;">Spring Cloud Microservices Topology</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
+              <div style="padding: 1rem; background: var(--bg-subtle); border-radius: 6px; border: 1px solid var(--border-subtle);">
+                <div style="color: var(--primary); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">API Gateway (:8088 -> 8080)</div>
+                <p style="font-size: 0.775rem; color: var(--text-secondary);">Central entry point routing <code>/api/**</code> via Eureka client load balancing (<code>lb://&lt;service-name&gt;</code>) and hosting the web dashboard.</p>
+              </div>
+
+              <div style="padding: 1rem; background: var(--bg-subtle); border-radius: 6px; border: 1px solid var(--border-subtle);">
+                <div style="color: #7c3aed; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">Eureka Registry (:8761)</div>
+                <p style="font-size: 0.775rem; color: var(--text-secondary);">Netflix Eureka server where all microservices register with automatic heartbeat health checks.</p>
+              </div>
+
+              <div style="padding: 1rem; background: var(--bg-subtle); border-radius: 6px; border: 1px solid var(--border-subtle);">
+                <div style="color: var(--success); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">OpenFeign Cross-Service Call</div>
+                <p style="font-size: 0.775rem; color: var(--text-secondary);">Application Service calls Company Job Service via declarative Feign client: <code>/api/applications/{id}/with-job</code>.</p>
+              </div>
+
+              <div style="padding: 1rem; background: var(--bg-subtle); border-radius: 6px; border: 1px solid var(--border-subtle);">
+                <div style="color: var(--warning); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">MongoDB Isolation</div>
+                <p style="font-size: 0.775rem; color: var(--text-secondary);">Database-per-service pattern with 6 isolated databases hosted on MongoDB (:27017).</p>
               </div>
             </div>
-            <div class="kpi-value" id="kpi-applications">0</div>
-            <div class="kpi-subtext">In hiring pipeline</div>
           </div>
-
-          <div class="kpi-card">
-            <div class="kpi-header">
-              <span class="kpi-title">Interviews</span>
-              <div class="kpi-icon-wrap">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line></svg>
-              </div>
-            </div>
-            <div class="kpi-value" id="kpi-interviews">0</div>
-            <div class="kpi-subtext">Technical & HR rounds</div>
-          </div>
-
-          <div class="kpi-card">
-            <div class="kpi-header">
-              <span class="kpi-title">Hiring Partners</span>
-              <div class="kpi-icon-wrap">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path></svg>
-              </div>
-            </div>
-            <div class="kpi-value" id="kpi-companies">0</div>
-            <div class="kpi-subtext">Registered organizations</div>
-          </div>
-        </div>
-
-        <!-- Microservices Grid Title -->
-        <div class="section-header" style="margin-top: 1rem; margin-bottom: 1rem;">
-          <div>
-            <h2 class="section-title" style="font-size: 1.15rem;">Microservices Stack Status</h2>
-            <p class="section-desc">8 independent Spring Boot microservices communicating via Eureka and API Gateway</p>
-          </div>
-        </div>
-
-        <div class="services-card-grid" id="services-health-grid">
-          <!-- Populated by JavaScript -->
-        </div>
-      </section>
-
-      <!-- ============================================================== -->
-      <!-- TAB 2: JOBS                                                    -->
-      <!-- ============================================================== -->
-      <section id="tab-jobs" class="tab-pane">
-        <div class="section-header">
-          <div>
-            <h1 class="section-title">Job Openings</h1>
-            <p class="section-desc">Manage recruitment listings published across registered companies.</p>
-          </div>
-          <div>
-            <button class="btn btn-primary" id="open-post-job-modal-btn">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-              Post Job Opening
-            </button>
-          </div>
-        </div>
-
-        <!-- Search & Filter -->
-        <div class="filter-bar">
-          <div class="search-wrap">
-            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="text" id="job-search-input" class="search-input" placeholder="Search by role title or skill...">
-          </div>
-          <select id="job-type-filter" class="filter-select">
-            <option value="">All Employment Types</option>
-            <option value="FULL_TIME">Full Time</option>
-            <option value="REMOTE">Remote</option>
-            <option value="CONTRACT">Contract</option>
-          </select>
-          <select id="job-status-filter" class="filter-select">
-            <option value="">All Statuses</option>
-            <option value="OPEN">Open Only</option>
-            <option value="CLOSED">Closed Only</option>
-          </select>
-        </div>
-
-        <div class="jobs-grid" id="jobs-container"></div>
-      </section>
-
-      <!-- ============================================================== -->
-      <!-- TAB 3: CANDIDATE POOL                                          -->
-      <!-- ============================================================== -->
-      <section id="tab-candidates" class="tab-pane">
-        <div class="section-header">
-          <div>
-            <h1 class="section-title">Candidate Directory</h1>
-            <p class="section-desc">Talent pool profiles, verified skills, and resume records.</p>
-          </div>
-          <div>
-            <button class="btn btn-primary" id="open-add-candidate-modal-btn">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
-              Add Candidate
-            </button>
-          </div>
-        </div>
-
-        <div class="filter-bar">
-          <div class="search-wrap">
-            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="text" id="candidate-search-input" class="search-input" placeholder="Search candidate by name, skills or background...">
-          </div>
-        </div>
-
-        <div class="candidates-grid" id="candidates-container"></div>
-      </section>
-
-      <!-- ============================================================== -->
-      <!-- TAB 4: HIRING PIPELINE & APPLICATIONS                         -->
-      <!-- ============================================================== -->
-      <section id="tab-pipeline" class="tab-pane">
-        <div class="section-header">
-          <div>
-            <h1 class="section-title">Application Pipeline</h1>
-            <p class="section-desc">Real-time candidate workflow stages and OpenFeign composite service inspections.</p>
-          </div>
-          <div>
-            <button class="btn btn-primary" id="open-apply-modal-btn">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
-              Submit Application
-            </button>
-          </div>
-        </div>
-
-        <div class="pipeline-board">
-          <div class="pipeline-col" data-status="APPLIED">
-            <div class="pipeline-col-header">
-              <span class="pipeline-col-title">Applied</span>
-              <span class="pipeline-counter" id="count-APPLIED">0</span>
-            </div>
-            <div class="pipeline-items-wrap" id="col-APPLIED"></div>
-          </div>
-
-          <div class="pipeline-col" data-status="UNDER_REVIEW">
-            <div class="pipeline-col-header">
-              <span class="pipeline-col-title">Under Review</span>
-              <span class="pipeline-counter" id="count-UNDER_REVIEW">0</span>
-            </div>
-            <div class="pipeline-items-wrap" id="col-UNDER_REVIEW"></div>
-          </div>
-
-          <div class="pipeline-col" data-status="SHORTLISTED">
-            <div class="pipeline-col-header">
-              <span class="pipeline-col-title">Shortlisted</span>
-              <span class="pipeline-counter" id="count-SHORTLISTED">0</span>
-            </div>
-            <div class="pipeline-items-wrap" id="col-SHORTLISTED"></div>
-          </div>
-
-          <div class="pipeline-col" data-status="OFFERED">
-            <div class="pipeline-col-header">
-              <span class="pipeline-col-title">Offered</span>
-              <span class="pipeline-counter" id="count-OFFERED">0</span>
-            </div>
-            <div class="pipeline-items-wrap" id="col-OFFERED"></div>
-          </div>
-
-          <div class="pipeline-col" data-status="REJECTED">
-            <div class="pipeline-col-header">
-              <span class="pipeline-col-title">Rejected</span>
-              <span class="pipeline-counter" id="count-REJECTED">0</span>
-            </div>
-            <div class="pipeline-items-wrap" id="col-REJECTED"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ============================================================== -->
-      <!-- TAB 5: INTERVIEW SCHEDULER                                     -->
-      <!-- ============================================================== -->
-      <section id="tab-interviews" class="tab-pane">
-        <div class="section-header">
-          <div>
-            <h1 class="section-title">Interview Coordination</h1>
-            <p class="section-desc">Manage technical rounds, screening calls, and interview feedback records.</p>
-          </div>
-          <div>
-            <button class="btn btn-primary" id="open-schedule-interview-modal-btn">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line></svg>
-              Schedule Interview
-            </button>
-          </div>
-        </div>
-
-        <div class="interviews-grid" id="interviews-container"></div>
-      </section>
-
-      <!-- ============================================================== -->
-      <!-- TAB 6: COMPANIES & USERS                                       -->
-      <!-- ============================================================== -->
-      <section id="tab-companies" class="tab-pane">
-        <div class="section-header">
-          <div>
-            <h1 class="section-title">Organizations & User Directory</h1>
-            <p class="section-desc">Registered employer companies and team member profiles.</p>
-          </div>
-          <div style="display: flex; gap: 0.5rem;">
-            <button class="btn btn-secondary" id="open-add-company-modal-btn">Register Company</button>
-            <button class="btn btn-primary" id="open-add-user-modal-btn">Create User</button>
-          </div>
-        </div>
-
-        <div style="margin-bottom: 2rem;">
-          <h3 style="font-family: var(--font-display); font-size: 1rem; color: #fff; margin-bottom: 0.85rem;">Hiring Companies</h3>
-          <div class="companies-grid" id="companies-container"></div>
-        </div>
-
-        <div>
-          <h3 style="font-family: var(--font-display); font-size: 1rem; color: #fff; margin-bottom: 0.85rem;">User Accounts</h3>
-          <div class="companies-grid" id="users-container"></div>
-        </div>
-      </section>
-
-      <!-- ============================================================== -->
-      <!-- TAB 7: EUREKA ARCHITECTURE                                     -->
-      <!-- ============================================================== -->
-      <section id="tab-architecture" class="tab-pane">
-        <div class="section-header">
-          <div>
-            <h1 class="section-title">Microservices Architecture & Topology</h1>
-            <p class="section-desc">Distributed Spring Cloud architecture, Eureka discovery topology, and Docker orchestration.</p>
-          </div>
-          <div>
-            <a href="http://localhost:8761" target="_blank" class="btn btn-primary">
-              Eureka Web Console (:8761)
-            </a>
-          </div>
-        </div>
-
-        <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 2rem;">
-          <h2 style="font-family: var(--font-display); font-size: 1.15rem; color: #fff; margin-bottom: 0.85rem;">System Topology Matrix</h2>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
-            <div style="padding: 1rem; background: var(--bg-app); border-radius: 6px; border: 1px solid var(--border-subtle);">
-              <div style="color: #60a5fa; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">API Gateway (:8088 -> 8080)</div>
-              <p style="font-size: 0.775rem; color: var(--text-secondary);">Spring Cloud Gateway routing <code>/api/**</code> via Eureka client dynamic load balancing (<code>lb://&lt;service-name&gt;</code>) and serving static UI.</p>
-            </div>
-
-            <div style="padding: 1rem; background: var(--bg-app); border-radius: 6px; border: 1px solid var(--border-subtle);">
-              <div style="color: #a78bfa; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">Eureka Registry (:8761)</div>
-              <p style="font-size: 0.775rem; color: var(--text-secondary);">Netflix Eureka server where all 7 client microservices register with heartbeat healthchecks.</p>
-            </div>
-
-            <div style="padding: 1rem; background: var(--bg-app); border-radius: 6px; border: 1px solid var(--border-subtle);">
-              <div style="color: #34d399; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">OpenFeign Cross-Service Call</div>
-              <p style="font-size: 0.775rem; color: var(--text-secondary);">Application Service communicates with Company Job Service via Feign: <code>/api/applications/{id}/with-job</code>.</p>
-            </div>
-
-            <div style="padding: 1rem; background: var(--bg-app); border-radius: 6px; border: 1px solid var(--border-subtle);">
-              <div style="color: #fbbf24; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">MongoDB Database Isolation</div>
-              <p style="font-size: 0.775rem; color: var(--text-secondary);">Database-per-service pattern with dedicated collections running on MongoDB (:27017).</p>
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </main>
 
     <!-- Notifications Drawer -->
@@ -407,7 +441,7 @@
       <div class="drawer-list" id="notifications-list"></div>
     </aside>
 
-    <!-- Toast Alerts Container -->
+    <!-- Toast Alerts -->
     <div class="toast-container" id="toast-container"></div>
   </div>
 
@@ -452,7 +486,7 @@
           </div>
           <div class="form-group">
             <label class="form-label" for="job-desc-input">Description</label>
-            <textarea id="job-desc-input" class="form-textarea" placeholder="Detail the role, stack, and responsibilities..." required></textarea>
+            <textarea id="job-desc-input" class="form-textarea" placeholder="Detail the role responsibilities..." required></textarea>
           </div>
         </div>
         <div class="modal-footer">
