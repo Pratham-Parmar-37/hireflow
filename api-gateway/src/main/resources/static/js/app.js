@@ -1,9 +1,8 @@
 // ==============================================================================
-// HireFlow AI – Client Orchestration Engine
+// HireFlow – Client Orchestration Engine
 // High-performance Vanilla JavaScript for Microservices Routing & Real-time State
 // ==============================================================================
 
-// API Base configuration
 const API_BASE = (window.location.protocol.startsWith('http') && window.location.port !== '')
   ? ''
   : 'http://localhost:8088';
@@ -18,14 +17,14 @@ const state = {
   users: [],
   notifications: [],
   serviceHealth: [
-    { name: 'eureka-server', port: 8761, desc: 'Central Service Registry & Discovery Server', tech: 'Spring Cloud Netflix Eureka', status: 'healthy', latency: '4ms' },
+    { name: 'eureka-server', port: 8761, desc: 'Central Service Registry & Discovery Server', tech: 'Spring Cloud Netflix Eureka', status: 'healthy', latency: '3ms' },
     { name: 'api-gateway', port: 8088, desc: 'Dynamic Reactive Reverse Proxy & UI Host', tech: 'Spring Cloud Gateway (WebFlux)', status: 'healthy', latency: '2ms' },
-    { name: 'user-service', port: 8081, desc: 'Role-based User Profiles & Identity Management', tech: 'Spring Boot + MongoDB', status: 'healthy', latency: '8ms' },
-    { name: 'company-job-service', port: 8082, desc: 'Enterprise Directory & Job Openings Catalog', tech: 'Spring Boot + MongoDB', status: 'healthy', latency: '6ms' },
-    { name: 'candidate-service', port: 8083, desc: 'Talent Pool, Skills Graph & Resume Profiles', tech: 'Spring Boot + MongoDB', status: 'healthy', latency: '7ms' },
-    { name: 'application-service', port: 8084, desc: 'Hiring Workflow & OpenFeign Job Consumer', tech: 'Spring Boot + OpenFeign', status: 'healthy', latency: '12ms' },
-    { name: 'interview-service', port: 8085, desc: 'Technical Screening & Evaluation Rounds', tech: 'Spring Boot + MongoDB', status: 'healthy', latency: '9ms' },
-    { name: 'notification-service', port: 8086, desc: 'Event-driven Candidate Alerts & Messages', tech: 'Spring Boot + MongoDB', status: 'healthy', latency: '5ms' }
+    { name: 'user-service', port: 8081, desc: 'Role-based User Profiles & Identity Management', tech: 'Spring Boot 3 + MongoDB', status: 'healthy', latency: '8ms' },
+    { name: 'company-job-service', port: 8082, desc: 'Enterprise Directory & Job Openings Catalog', tech: 'Spring Boot 3 + MongoDB', status: 'healthy', latency: '6ms' },
+    { name: 'candidate-service', port: 8083, desc: 'Talent Pool, Skills Graph & Resume Profiles', tech: 'Spring Boot 3 + MongoDB', status: 'healthy', latency: '7ms' },
+    { name: 'application-service', port: 8084, desc: 'Hiring Workflow & OpenFeign Job Consumer', tech: 'Spring Boot 3 + OpenFeign', status: 'healthy', latency: '11ms' },
+    { name: 'interview-service', port: 8085, desc: 'Technical Screening & Evaluation Rounds', tech: 'Spring Boot 3 + MongoDB', status: 'healthy', latency: '8ms' },
+    { name: 'notification-service', port: 8086, desc: 'Event-driven Candidate Alerts & Messages', tech: 'Spring Boot 3 + MongoDB', status: 'healthy', latency: '5ms' }
   ]
 };
 
@@ -85,7 +84,7 @@ async function fetchAllData() {
     checkHealthPings();
   } catch (err) {
     console.error('Error fetching data:', err);
-    showToast('Failed to load some microservices data', 'error');
+    showToast('Failed to load microservices data', 'error');
   }
 }
 
@@ -97,7 +96,7 @@ async function fetchJobs() {
       renderJobs();
     }
   } catch (e) {
-    console.warn('Jobs service unreachable via gateway', e);
+    console.warn('Jobs service unreachable', e);
   }
 }
 
@@ -109,7 +108,7 @@ async function fetchCandidates() {
       renderCandidates();
     }
   } catch (e) {
-    console.warn('Candidate service unreachable via gateway', e);
+    console.warn('Candidate service unreachable', e);
   }
 }
 
@@ -121,7 +120,7 @@ async function fetchApplications() {
       renderPipeline();
     }
   } catch (e) {
-    console.warn('Application service unreachable via gateway', e);
+    console.warn('Application service unreachable', e);
   }
 }
 
@@ -133,7 +132,7 @@ async function fetchInterviews() {
       renderInterviews();
     }
   } catch (e) {
-    console.warn('Interview service unreachable via gateway', e);
+    console.warn('Interview service unreachable', e);
   }
 }
 
@@ -146,7 +145,7 @@ async function fetchCompanies() {
       populateCompanySelects();
     }
   } catch (e) {
-    console.warn('Company service unreachable via gateway', e);
+    console.warn('Company service unreachable', e);
   }
 }
 
@@ -158,7 +157,7 @@ async function fetchUsers() {
       renderUsers();
     }
   } catch (e) {
-    console.warn('User service unreachable via gateway', e);
+    console.warn('User service unreachable', e);
   }
 }
 
@@ -170,7 +169,7 @@ async function fetchNotifications() {
       renderNotifications();
     }
   } catch (e) {
-    console.warn('Notification service unreachable via gateway', e);
+    console.warn('Notification service unreachable', e);
   }
 }
 
@@ -191,12 +190,12 @@ async function checkHealthPings() {
       else if (s.name === 'interview-service') endpoint = `${API_BASE}/api/interviews`;
       else if (s.name === 'notification-service') endpoint = `${API_BASE}/api/notifications`;
 
-      const res = await fetch(endpoint, { method: 'GET', mode: 'no-cors' });
+      await fetch(endpoint, { method: 'GET', mode: 'no-cors' });
       const elapsed = Math.round(performance.now() - start);
       s.latency = `${elapsed}ms`;
       s.status = 'healthy';
     } catch {
-      s.status = 'healthy'; // In Docker stack, gateway proxies these safely
+      s.status = 'healthy';
     }
   }
   renderServiceHealth();
@@ -207,25 +206,25 @@ function renderServiceHealth() {
   if (!container) return;
 
   container.innerHTML = state.serviceHealth.map(s => `
-    <div class="service-health-card">
+    <div class="service-card">
       <div class="service-card-top">
-        <div class="service-name-wrap">
-          <span class="service-status-dot ${s.status === 'healthy' ? '' : 'down'}"></span>
+        <div class="service-title-group">
+          <span class="service-indicator-dot ${s.status === 'healthy' ? '' : 'down'}"></span>
           <span class="service-name">${s.name}</span>
         </div>
-        <span class="service-port-tag">:${s.port}</span>
+        <span class="service-port">:${s.port}</span>
       </div>
       <p class="service-desc">${s.desc}</p>
       <div class="service-card-bottom">
-        <span class="service-tech-tag">${s.tech}</span>
-        <span>Ping: ${s.latency}</span>
+        <span class="service-framework-tag">${s.tech}</span>
+        <span>${s.latency}</span>
       </div>
     </div>
   `).join('');
 }
 
 // ==============================================================================
-// Rendering Engine
+// KPI Engine
 // ==============================================================================
 function updateKPIs() {
   document.getElementById('kpi-jobs').innerText = state.jobs.length;
@@ -240,7 +239,9 @@ function updateKPIs() {
   document.getElementById('badge-interviews-count').innerText = state.interviews.length;
 }
 
-// Render Jobs
+// ==============================================================================
+// Jobs Renderer
+// ==============================================================================
 function renderJobs() {
   const container = document.getElementById('jobs-container');
   if (!container) return;
@@ -262,49 +263,40 @@ function renderJobs() {
   if (filtered.length === 0) {
     container.innerHTML = `
       <div class="empty-state" style="grid-column: 1 / -1;">
-        <div class="empty-state-icon">💼</div>
-        <h3>No Job Openings Found</h3>
-        <p>No listings match your search criteria. Click 'Post New Job' or 'Seed Demo Data' to get started.</p>
+        <p>No job postings match your filters. Click 'Post Job Opening' or 'Seed Demo Data'.</p>
       </div>
     `;
     return;
   }
 
   container.innerHTML = filtered.map(job => {
-    const company = state.companies.find(c => c.id === job.companyId) || { companyName: 'HireFlow Partner' };
+    const company = state.companies.find(c => c.id === job.companyId) || { companyName: 'Hiring Partner' };
     const isOpen = job.status === 'OPEN';
-    const isRemote = job.employmentType === 'REMOTE';
 
     return `
       <div class="job-card">
         <div class="job-card-header">
           <div>
             <h3 class="job-title">${escapeHtml(job.title)}</h3>
-            <div class="job-company">🏢 ${escapeHtml(company.companyName)}</div>
+            <div class="job-company">${escapeHtml(company.companyName)}</div>
           </div>
-          <span class="badge ${isOpen ? 'badge-open' : 'badge-closed'}">
-            ● ${job.status || 'OPEN'}
-          </span>
+          <span class="tag ${isOpen ? 'tag-success' : ''}">${job.status || 'OPEN'}</span>
         </div>
 
-        <div class="job-badges">
-          <span class="badge ${isRemote ? 'badge-remote' : 'badge-fulltime'}">
-            ${job.employmentType || 'FULL_TIME'}
-          </span>
-          <span class="badge" style="background: rgba(255,255,255,0.06); color: #cbd5e1;">
-            ⏳ ${escapeHtml(job.experienceRequired || '1-3 years')}
-          </span>
+        <div class="job-tags-row">
+          <span class="tag tag-neutral">${job.employmentType || 'FULL_TIME'}</span>
+          <span class="tag tag-neutral">${escapeHtml(job.experienceRequired || '1-3 years')}</span>
         </div>
 
-        <p class="job-desc">${escapeHtml(job.description || 'Exciting engineering role within our modern microservices architecture.')}</p>
+        <p class="job-desc">${escapeHtml(job.description || 'Engineering role within our distributed microservices platform.')}</p>
 
-        <div class="job-meta-row">
+        <div class="job-footer">
           <div>
-            <div class="job-salary">💰 ${escapeHtml(job.salary || 'Competitive')}</div>
-            <div class="job-exp">ID: <code style="font-family: var(--font-mono); font-size: 0.7rem;">${job.id?.substring(0, 8)}...</code></div>
+            <div class="job-salary-text">${escapeHtml(job.salary || 'Competitive')}</div>
+            <span style="font-size: 0.7rem; color: var(--text-tertiary); font-family: var(--font-mono);">${job.id?.substring(0, 8)}</span>
           </div>
-          <button class="btn btn-primary" onclick="openApplyForJob('${job.id}')" style="padding: 0.4rem 0.85rem; font-size: 0.75rem;">
-            Apply Now
+          <button class="btn btn-secondary" onclick="openApplyForJob('${job.id}')" style="padding: 0.35rem 0.75rem; font-size: 0.75rem;">
+            Apply
           </button>
         </div>
       </div>
@@ -312,7 +304,9 @@ function renderJobs() {
   }).join('');
 }
 
-// Render Candidates
+// ==============================================================================
+// Candidates Renderer
+// ==============================================================================
 function renderCandidates() {
   const container = document.getElementById('candidates-container');
   if (!container) return;
@@ -329,9 +323,7 @@ function renderCandidates() {
   if (filtered.length === 0) {
     container.innerHTML = `
       <div class="empty-state" style="grid-column: 1 / -1;">
-        <div class="empty-state-icon">👥</div>
-        <h3>No Candidates in Directory</h3>
-        <p>Click 'Add Candidate' or 'Seed Demo Data' to populate candidate profiles.</p>
+        <p>No candidates found. Click 'Add Candidate' or 'Seed Demo Data'.</p>
       </div>
     `;
     return;
@@ -349,27 +341,27 @@ function renderCandidates() {
 
     return `
       <div class="candidate-card">
-        <div class="candidate-top">
+        <div class="candidate-header">
           <div class="candidate-avatar">${initials}</div>
-          <div class="candidate-info-wrap">
+          <div>
             <h3 class="candidate-name">${escapeHtml(c.fullName)}</h3>
-            <div class="candidate-email">✉️ ${escapeHtml(c.email)}</div>
+            <div class="candidate-email">${escapeHtml(c.email)}</div>
           </div>
         </div>
 
-        <div class="candidate-experience">
-          🎓 ${escapeHtml(c.education || 'Computer Science')} &bull; ⏱️ ${escapeHtml(c.experience || '3 years')}
+        <div class="candidate-meta">
+          ${escapeHtml(c.education || 'Computer Science')} &bull; ${escapeHtml(c.experience || '3 years')}
         </div>
 
-        <div class="candidate-skills">
-          ${skills.map(s => `<span class="skill-tag">${escapeHtml(s)}</span>`).join('')}
+        <div class="candidate-skills-list">
+          ${skills.map(s => `<span class="skill-pill">${escapeHtml(s)}</span>`).join('')}
         </div>
 
-        <div class="candidate-actions">
-          <a href="${c.resumeUrl || '#'}" target="_blank" class="btn btn-outline" style="flex: 1; padding: 0.4rem; font-size: 0.75rem;">
-            📄 View Resume
+        <div style="display: flex; gap: 0.5rem; margin-top: auto; border-top: 1px solid var(--border-subtle); padding-top: 0.75rem;">
+          <a href="${c.resumeUrl || '#'}" target="_blank" class="btn btn-ghost" style="flex: 1; padding: 0.35rem; font-size: 0.75rem;">
+            Resume
           </a>
-          <button class="btn btn-secondary" onclick="openApplyForCandidate('${c.id}')" style="flex: 1; padding: 0.4rem; font-size: 0.75rem;">
+          <button class="btn btn-secondary" onclick="openApplyForCandidate('${c.id}')" style="flex: 1; padding: 0.35rem; font-size: 0.75rem;">
             Submit App
           </button>
         </div>
@@ -378,7 +370,9 @@ function renderCandidates() {
   }).join('');
 }
 
-// Render Kanban Hiring Pipeline
+// ==============================================================================
+// Kanban Pipeline Renderer
+// ==============================================================================
 function renderPipeline() {
   const statuses = ['APPLIED', 'UNDER_REVIEW', 'SHORTLISTED', 'OFFERED', 'REJECTED'];
 
@@ -391,7 +385,7 @@ function renderPipeline() {
     if (countEl) countEl.innerText = items.length;
 
     if (items.length === 0) {
-      col.innerHTML = `<div style="text-align: center; color: #475569; font-size: 0.75rem; padding: 1.5rem 0;">No applications</div>`;
+      col.innerHTML = `<div style="text-align: center; color: var(--text-tertiary); font-size: 0.75rem; padding: 2rem 0;">No applications</div>`;
       return;
     }
 
@@ -401,11 +395,11 @@ function renderPipeline() {
 
       return `
         <div class="pipeline-card" onclick="viewFeignComposite('${app.id}')">
-          <div class="pipeline-card-title">${escapeHtml(candidate.fullName)}</div>
-          <div style="font-size: 0.8rem; color: var(--primary);">💼 ${escapeHtml(job.title)}</div>
-          <div class="pipeline-card-meta">
-            <span>📅 ${escapeHtml(app.applicationDate || 'Recent')}</span>
-            <span style="color: #38bdf8; font-weight: 500; font-size: 0.7rem;">🔍 Feign /with-job</span>
+          <div class="pipeline-card-candidate">${escapeHtml(candidate.fullName)}</div>
+          <div class="pipeline-card-job">${escapeHtml(job.title)}</div>
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.725rem; color: var(--text-tertiary);">
+            <span>${escapeHtml(app.applicationDate || 'Recent')}</span>
+            <span style="color: #60a5fa;">Feign /with-job</span>
           </div>
           <div style="margin-top: 0.35rem;" onclick="event.stopPropagation();">
             <select class="pipeline-status-select" onchange="updateApplicationStatus('${app.id}', this.value)">
@@ -418,7 +412,9 @@ function renderPipeline() {
   });
 }
 
-// Render Interviews
+// ==============================================================================
+// Interviews Renderer
+// ==============================================================================
 function renderInterviews() {
   const container = document.getElementById('interviews-container');
   if (!container) return;
@@ -426,9 +422,7 @@ function renderInterviews() {
   if (state.interviews.length === 0) {
     container.innerHTML = `
       <div class="empty-state" style="grid-column: 1 / -1;">
-        <div class="empty-state-icon">📅</div>
-        <h3>No Scheduled Interviews</h3>
-        <p>Click 'Schedule Interview' or 'Seed Demo Data' to coordinate candidate screening sessions.</p>
+        <p>No interviews scheduled. Click 'Schedule Interview' or 'Seed Demo Data'.</p>
       </div>
     `;
     return;
@@ -441,46 +435,46 @@ function renderInterviews() {
       <div class="interview-card">
         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
           <div>
-            <h3 style="font-family: var(--font-display); font-size: 1.1rem; color: #fff; font-weight: 700;">
+            <h3 style="font-family: var(--font-display); font-size: 0.975rem; color: #fff; font-weight: 600;">
               ${escapeHtml(candidate.fullName)}
             </h3>
-            <span style="font-size: 0.775rem; color: var(--secondary);">Type: ${i.interviewType || 'ONLINE'}</span>
+            <span style="font-size: 0.75rem; color: #a78bfa;">${i.interviewType || 'ONLINE'}</span>
           </div>
-          <span class="interview-date-badge">
-            📅 ${escapeHtml(i.interviewDate || 'Upcoming')}
-          </span>
+          <span class="tag tag-neutral">${escapeHtml(i.interviewDate || 'Upcoming')}</span>
         </div>
 
-        <p style="font-size: 0.825rem; color: #94a3b8; line-height: 1.4;">
-          ${escapeHtml(i.feedback || 'Scheduled technical interview round. Focus on microservices and cloud deployment.')}
+        <p style="font-size: 0.785rem; color: var(--text-secondary); line-height: 1.45;">
+          ${escapeHtml(i.feedback || 'Scheduled technical evaluation round.')}
         </p>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.65rem; font-size: 0.75rem; color: #64748b;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 0.65rem; font-size: 0.725rem; color: var(--text-tertiary);">
           <span>Status: <strong style="color: #34d399;">${i.status || 'SCHEDULED'}</strong></span>
-          <span>App ID: <code style="font-family: var(--font-mono);">${i.applicationId?.substring(0, 6)}...</code></span>
+          <span style="font-family: var(--font-mono);">${i.applicationId?.substring(0, 8)}</span>
         </div>
       </div>
     `;
   }).join('');
 }
 
-// Render Companies & Users
+// ==============================================================================
+// Companies & Users Renderer
+// ==============================================================================
 function renderCompanies() {
   const container = document.getElementById('companies-container');
   if (!container) return;
 
   if (state.companies.length === 0) {
-    container.innerHTML = `<div class="empty-state"><p>No companies registered. Click 'Register Company' or 'Seed Demo Data'.</p></div>`;
+    container.innerHTML = `<div class="empty-state"><p>No companies registered.</p></div>`;
     return;
   }
 
   container.innerHTML = state.companies.map(c => `
     <div class="company-card">
-      <div class="company-name">🏢 ${escapeHtml(c.companyName)}</div>
-      <div style="font-size: 0.775rem; color: #38bdf8;">${escapeHtml(c.industry || 'Technology')} &bull; ${escapeHtml(c.location || 'Remote')}</div>
-      <p style="font-size: 0.8rem; color: #94a3b8;">${escapeHtml(c.description || 'Enterprise partner in the HireFlow AI ecosystem.')}</p>
-      <a href="${c.website || '#'}" target="_blank" class="company-website-link">
-        🔗 ${escapeHtml(c.website || 'https://hireflow.ai')}
+      <div class="company-title">${escapeHtml(c.companyName)}</div>
+      <div style="font-size: 0.75rem; color: #60a5fa;">${escapeHtml(c.industry || 'Technology')} &bull; ${escapeHtml(c.location || 'Remote')}</div>
+      <p style="font-size: 0.785rem; color: var(--text-secondary);">${escapeHtml(c.description || 'Enterprise partner in the HireFlow network.')}</p>
+      <a href="${c.website || '#'}" target="_blank" class="company-link">
+        ${escapeHtml(c.website || 'https://example.com')}
       </a>
     </div>
   `).join('');
@@ -491,24 +485,24 @@ function renderUsers() {
   if (!container) return;
 
   if (state.users.length === 0) {
-    container.innerHTML = `<div class="empty-state"><p>No users registered yet.</p></div>`;
+    container.innerHTML = `<div class="empty-state"><p>No users registered.</p></div>`;
     return;
   }
 
   container.innerHTML = state.users.map(u => `
     <div class="company-card">
-      <div class="company-name">👤 ${escapeHtml(u.fullName)}</div>
-      <div style="font-size: 0.775rem; color: #94a3b8;">✉️ ${escapeHtml(u.email)}</div>
-      <div style="margin-top: 0.5rem;">
-        <span class="badge" style="background: rgba(139, 92, 246, 0.15); color: #c084fc;">
-          ${escapeHtml(u.role || 'USER')}
-        </span>
+      <div class="company-title">${escapeHtml(u.fullName)}</div>
+      <div style="font-size: 0.75rem; color: var(--text-secondary);">${escapeHtml(u.email)}</div>
+      <div style="margin-top: 0.35rem;">
+        <span class="tag tag-neutral">${escapeHtml(u.role || 'USER')}</span>
       </div>
     </div>
   `).join('');
 }
 
-// Render Notifications
+// ==============================================================================
+// Notifications Renderer
+// ==============================================================================
 function renderNotifications() {
   const list = document.getElementById('notifications-list');
   const badge = document.getElementById('notif-badge');
@@ -521,20 +515,20 @@ function renderNotifications() {
   }
 
   if (state.notifications.length === 0) {
-    list.innerHTML = `<div style="text-align: center; padding: 1rem; color: #64748b; font-size: 0.75rem;">No active notifications</div>`;
+    list.innerHTML = `<div style="text-align: center; padding: 1.5rem; color: var(--text-tertiary); font-size: 0.75rem;">No notifications</div>`;
     return;
   }
 
   list.innerHTML = state.notifications.slice(0, 8).map(n => `
     <div class="drawer-item ${n.status !== 'READ' ? 'unread' : ''}">
-      <div>🔔 ${escapeHtml(n.message || 'Workflow notification')}</div>
-      <div class="drawer-time">${escapeHtml(n.createdAt || 'Just now')}</div>
+      <div>${escapeHtml(n.message || 'Notification')}</div>
+      <div style="font-size: 0.65rem; color: var(--text-tertiary); margin-top: 0.2rem;">${escapeHtml(n.createdAt || 'Recent')}</div>
     </div>
   `).join('');
 }
 
 // ==============================================================================
-// Search & Filter Interactions
+// Search & Filter Listeners
 // ==============================================================================
 function initSearchAndFilters() {
   const jobSearch = document.getElementById('job-search-input');
@@ -566,40 +560,33 @@ function initModals() {
     }
   });
 
-  // Post Job Modal
   document.getElementById('open-post-job-modal-btn')?.addEventListener('click', () => {
     populateCompanySelects();
     openModal('modal-post-job');
   });
 
-  // Add Candidate Modal
   document.getElementById('open-add-candidate-modal-btn')?.addEventListener('click', () => {
     openModal('modal-add-candidate');
   });
 
-  // Submit Application Modal
   document.getElementById('open-apply-modal-btn')?.addEventListener('click', () => {
     populateApplicationSelects();
     openModal('modal-submit-app');
   });
 
-  // Schedule Interview Modal
   document.getElementById('open-schedule-interview-modal-btn')?.addEventListener('click', () => {
     populateInterviewSelects();
     openModal('modal-schedule-interview');
   });
 
-  // Register Company Modal
   document.getElementById('open-add-company-modal-btn')?.addEventListener('click', () => {
     openModal('modal-add-company');
   });
 
-  // Add User Modal
   document.getElementById('open-add-user-modal-btn')?.addEventListener('click', () => {
     openModal('modal-add-user');
   });
 
-  // Bind Form Submissions
   bindFormSubmits();
 }
 
@@ -612,18 +599,15 @@ function closeModal(id) {
 }
 
 function initActionButtons() {
-  // Refresh button
   document.getElementById('refresh-all-btn')?.addEventListener('click', () => {
     showToast('Refreshing microservices data...', 'info');
     fetchAllData();
   });
 
-  // Seed Demo Data button
   document.getElementById('seed-demo-btn')?.addEventListener('click', () => {
     seedDemoData();
   });
 
-  // Notifications Drawer Toggle
   document.getElementById('notifications-toggle-btn')?.addEventListener('click', () => {
     const drawer = document.getElementById('notifications-drawer');
     drawer?.classList.toggle('active');
@@ -634,7 +618,6 @@ function initActionButtons() {
   });
 }
 
-// Select Populators
 function populateCompanySelects() {
   const select = document.getElementById('job-company-select');
   if (!select) return;
@@ -680,7 +663,6 @@ function populateInterviewSelects() {
   }
 }
 
-// Quick apply openers
 window.openApplyForJob = function(jobId) {
   populateApplicationSelects(jobId, null);
   openModal('modal-submit-app');
@@ -692,10 +674,9 @@ window.openApplyForCandidate = function(candId) {
 };
 
 // ==============================================================================
-// Form Submissions (REST API Mutations)
+// Form Submissions
 // ==============================================================================
 function bindFormSubmits() {
-  // Post Job
   document.getElementById('form-post-job')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const payload = {
@@ -706,7 +687,7 @@ function bindFormSubmits() {
       experienceRequired: document.getElementById('job-exp-input').value,
       description: document.getElementById('job-desc-input').value,
       status: 'OPEN',
-      postedByUserId: state.users[0]?.id || 'system-admin'
+      postedByUserId: state.users[0]?.id || 'admin'
     };
 
     try {
@@ -716,7 +697,7 @@ function bindFormSubmits() {
         body: JSON.stringify(payload)
       });
       if (res.ok) {
-        showToast('Job opening published successfully!', 'success');
+        showToast('Job opening published', 'success');
         closeModal('modal-post-job');
         document.getElementById('form-post-job').reset();
         await fetchJobs();
@@ -725,18 +706,17 @@ function bindFormSubmits() {
         throw new Error('Failed to post job');
       }
     } catch (err) {
-      showToast('Error saving job to database: ' + err.message, 'error');
+      showToast('Error saving job: ' + err.message, 'error');
     }
   });
 
-  // Add Candidate
   document.getElementById('form-add-candidate')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const skillsRaw = document.getElementById('candidate-skills-input').value;
     const skills = skillsRaw.split(',').map(s => s.trim()).filter(Boolean);
 
     const payload = {
-      userId: state.users[0]?.id || 'guest-user',
+      userId: state.users[0]?.id || 'user-1',
       fullName: document.getElementById('candidate-name-input').value,
       email: document.getElementById('candidate-email-input').value,
       skills: skills,
@@ -752,7 +732,7 @@ function bindFormSubmits() {
         body: JSON.stringify(payload)
       });
       if (res.ok) {
-        showToast('Candidate profile registered!', 'success');
+        showToast('Candidate profile registered', 'success');
         closeModal('modal-add-candidate');
         document.getElementById('form-add-candidate').reset();
         await fetchCandidates();
@@ -765,7 +745,6 @@ function bindFormSubmits() {
     }
   });
 
-  // Submit Application
   document.getElementById('form-submit-app')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const payload = {
@@ -782,7 +761,7 @@ function bindFormSubmits() {
         body: JSON.stringify(payload)
       });
       if (res.ok) {
-        showToast('Application submitted to pipeline!', 'success');
+        showToast('Application submitted', 'success');
         closeModal('modal-submit-app');
         await fetchApplications();
         updateKPIs();
@@ -794,7 +773,6 @@ function bindFormSubmits() {
     }
   });
 
-  // Schedule Interview
   document.getElementById('form-schedule-interview')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const payload = {
@@ -813,7 +791,7 @@ function bindFormSubmits() {
         body: JSON.stringify(payload)
       });
       if (res.ok) {
-        showToast('Interview round scheduled!', 'success');
+        showToast('Interview round scheduled', 'success');
         closeModal('modal-schedule-interview');
         document.getElementById('form-schedule-interview').reset();
         await fetchInterviews();
@@ -826,7 +804,6 @@ function bindFormSubmits() {
     }
   });
 
-  // Register Company
   document.getElementById('form-add-company')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const payload = {
@@ -844,7 +821,7 @@ function bindFormSubmits() {
         body: JSON.stringify(payload)
       });
       if (res.ok) {
-        showToast('Company registered successfully!', 'success');
+        showToast('Company registered', 'success');
         closeModal('modal-add-company');
         document.getElementById('form-add-company').reset();
         await fetchCompanies();
@@ -857,7 +834,6 @@ function bindFormSubmits() {
     }
   });
 
-  // Create User
   document.getElementById('form-add-user')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const payload = {
@@ -873,7 +849,7 @@ function bindFormSubmits() {
         body: JSON.stringify(payload)
       });
       if (res.ok) {
-        showToast('User profile created!', 'success');
+        showToast('User profile created', 'success');
         closeModal('modal-add-user');
         document.getElementById('form-add-user').reset();
         await fetchUsers();
@@ -886,7 +862,6 @@ function bindFormSubmits() {
   });
 }
 
-// Update Application Status in Pipeline
 window.updateApplicationStatus = async function(appId, newStatus) {
   const app = state.applications.find(a => a.id === appId);
   if (!app) return;
@@ -904,11 +879,10 @@ window.updateApplicationStatus = async function(appId, newStatus) {
       renderPipeline();
     }
   } catch (err) {
-    showToast('Failed to update pipeline status', 'error');
+    showToast('Failed to update status', 'error');
   }
 };
 
-// OpenFeign Composite Inspector (/with-job)
 window.viewFeignComposite = async function(appId) {
   const viewer = document.getElementById('feign-json-content');
   if (viewer) viewer.innerText = 'Invoking OpenFeign: Application Service -> Eureka -> Company Job Service...';
@@ -931,24 +905,22 @@ window.viewFeignComposite = async function(appId) {
 // Demo Data Seeder
 // ==============================================================================
 async function seedDemoData() {
-  showToast('Seeding rich demonstration data into microservices...', 'info');
+  showToast('Populating sample records across microservices...', 'info');
 
   try {
-    // 1. Seed Company
     const compRes = await fetch(`${API_BASE}/api/companies`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        companyName: 'Starlight AI Technologies',
-        industry: 'Artificial Intelligence & Cloud',
+        companyName: 'Starlight Technologies',
+        industry: 'Distributed Cloud Systems',
         location: 'San Francisco, CA & Remote',
-        website: 'https://starlight.ai',
-        description: 'Next-generation AI agents and autonomous cognitive infrastructure.'
+        website: 'https://starlight.tech',
+        description: 'Enterprise cloud infrastructure and distributed platform engineering.'
       })
     });
     const company = await compRes.json();
 
-    // 2. Seed Jobs
     const jobRes1 = await fetch(`${API_BASE}/api/jobs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -958,9 +930,9 @@ async function seedDemoData() {
         employmentType: 'REMOTE',
         salary: '18-28 LPA ($140,000)',
         experienceRequired: '4-7 years',
-        description: 'Design and optimize resilient microservices architectures using Spring Boot 3, Spring Cloud Gateway, Eureka discovery, and Docker Compose.',
+        description: 'Architect and scale fault-tolerant microservices using Spring Boot 3, Spring Cloud Gateway, Eureka discovery, and Docker Compose.',
         status: 'OPEN',
-        postedByUserId: 'recruiter-admin'
+        postedByUserId: 'admin'
       })
     });
     const job1 = await jobRes1.json();
@@ -974,14 +946,13 @@ async function seedDemoData() {
         employmentType: 'FULL_TIME',
         salary: '14-22 LPA ($110,000)',
         experienceRequired: '2-5 years',
-        description: 'Implement reactive Netty front-doors, high-throughput MongoDB data models, and modern user-centric interfaces.',
+        description: 'Develop reactive Netty endpoints, high-throughput MongoDB data models, and modern user-centric interfaces.',
         status: 'OPEN',
-        postedByUserId: 'recruiter-admin'
+        postedByUserId: 'admin'
       })
     });
     const job2 = await jobRes2.json();
 
-    // 3. Seed Candidates
     const candRes1 = await fetch(`${API_BASE}/api/candidates`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1003,16 +974,15 @@ async function seedDemoData() {
       body: JSON.stringify({
         userId: 'user-alina',
         fullName: 'Alina Vance',
-        email: 'alina.v@starlight.ai',
+        email: 'alina.v@starlight.tech',
         skills: ['Spring Cloud', 'Kubernetes', 'Reactive WebFlux', 'MongoDB', 'Kafka'],
         experience: '5 years cloud-native engineering',
         education: 'M.S. Software Systems',
-        resumeUrl: 'https://hireflow.ai/resumes/alina.pdf'
+        resumeUrl: 'https://starlight.tech/resumes/alina.pdf'
       })
     });
     const candidate2 = await candRes2.json();
 
-    // 4. Seed Applications
     const appRes = await fetch(`${API_BASE}/api/applications`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1036,7 +1006,6 @@ async function seedDemoData() {
       })
     });
 
-    // 5. Seed Interview
     await fetch(`${API_BASE}/api/interviews`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1050,24 +1019,23 @@ async function seedDemoData() {
       })
     });
 
-    // 6. Seed Notification
     await fetch(`${API_BASE}/api/notifications`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         userId: candidate1.userId,
-        message: 'Your application for Senior Java Architect has been SHORTLISTED!',
+        message: 'Application for Senior Java Architect moved to SHORTLISTED',
         type: 'APPLICATION',
         status: 'UNREAD',
         createdAt: new Date().toLocaleTimeString()
       })
     });
 
-    showToast('Demo data successfully populated across all services!', 'success');
+    showToast('Sample records populated successfully', 'success');
     await fetchAllData();
   } catch (err) {
     console.error('Seed demo error:', err);
-    showToast('Error seeding demo data: ' + err.message, 'error');
+    showToast('Error seeding records: ' + err.message, 'error');
   }
 }
 
@@ -1080,20 +1048,15 @@ function showToast(message, type = 'info') {
 
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
-
-  let icon = 'ℹ️';
-  if (type === 'success') icon = '✅';
-  if (type === 'error') icon = '⚠️';
-
-  toast.innerHTML = `<span>${icon}</span> <span>${escapeHtml(message)}</span>`;
+  toast.innerHTML = `<span>${escapeHtml(message)}</span>`;
   container.appendChild(toast);
 
   setTimeout(() => {
     toast.style.opacity = '0';
-    toast.style.transform = 'translateY(10px)';
-    toast.style.transition = 'all 0.3s ease';
-    setTimeout(() => toast.remove(), 300);
-  }, 4000);
+    toast.style.transform = 'translateY(8px)';
+    toast.style.transition = 'all 0.2s ease';
+    setTimeout(() => toast.remove(), 250);
+  }, 3500);
 }
 
 function escapeHtml(str) {
