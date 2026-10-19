@@ -1,0 +1,70 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+rule_files:
+  - /etc/prometheus/alerts.yml
+scrape_configs:
+  - job_name: hireflow-services
+    metrics_path: /prometheus
+    static_configs:
+      - targets: ["eureka-server:8761"]
+        labels:
+          service: eureka-server
+      - targets: ["api-gateway:8080"]
+        labels:
+          service: api-gateway
+      - targets: ["user-service:8081"]
+        labels:
+          service: user-service
+      - targets: ["company-job-service:8082"]
+        labels:
+          service: company-job-service
+      - targets: ["candidate-service:8083"]
+        labels:
+          service: candidate-service
+      - targets: ["application-service:8084"]
+        labels:
+          service: application-service
+      - targets: ["interview-service:8085"]
+        labels:
+          service: interview-service
+      - targets: ["notification-service:8086"]
+        labels:
+          service: notification-service
+  - job_name: hireflow-health
+    metrics_path: /probe
+    scrape_timeout: 10s
+    params:
+      module: [spring_health]
+    static_configs:
+      - targets: ["http://eureka-server:8761/health"]
+        labels:
+          service: eureka-server
+      - targets: ["http://api-gateway:8080/health"]
+        labels:
+          service: api-gateway
+      - targets: ["http://user-service:8081/health"]
+        labels:
+          service: user-service
+      - targets: ["http://company-job-service:8082/health"]
+        labels:
+          service: company-job-service
+      - targets: ["http://candidate-service:8083/health"]
+        labels:
+          service: candidate-service
+      - targets: ["http://application-service:8084/health"]
+        labels:
+          service: application-service
+      - targets: ["http://interview-service:8085/health"]
+        labels:
+          service: interview-service
+      - targets: ["http://notification-service:8086/health"]
+        labels:
+          service: notification-service
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115

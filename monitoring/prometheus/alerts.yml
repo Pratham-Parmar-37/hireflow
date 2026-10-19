@@ -1,0 +1,25 @@
+groups:
+  - name: hireflow
+    rules:
+      - alert: HireFlowServiceUnhealthy
+        expr: probe_success{job="hireflow-health"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: '{{ $labels.service }} health check failed'
+          description: 'The /health endpoint failed to return HTTP 200 with status UP for two minutes.'
+      - alert: HireFlowMetricsUnavailable
+        expr: up{job="hireflow-services"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: '{{ $labels.service }} metrics unavailable'
+      - alert: HireFlowHealthProbeUnavailable
+        expr: up{job="hireflow-health"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Health probe collection unavailable for {{ $labels.service }}'

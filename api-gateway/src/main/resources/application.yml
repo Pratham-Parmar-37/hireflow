@@ -11,6 +11,83 @@ spring:
           enabled: true
           lower-case-service-id: true
       routes:
+        - id: health-eureka-server
+          uri: ${MONITORING_EUREKA_URL:http://localhost:8761}
+          predicates:
+            - Path=/api/platform/health/eureka-server
+            - Method=GET
+          filters:
+            - SetPath=/health
+          metadata:
+            connect-timeout: 2000
+            response-timeout: 5000
+
+        - id: health-user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/platform/health/user-service
+            - Method=GET
+          filters:
+            - SetPath=/health
+          metadata:
+            connect-timeout: 2000
+            response-timeout: 5000
+
+        - id: health-company-job-service
+          uri: lb://company-job-service
+          predicates:
+            - Path=/api/platform/health/company-job-service
+            - Method=GET
+          filters:
+            - SetPath=/health
+          metadata:
+            connect-timeout: 2000
+            response-timeout: 5000
+
+        - id: health-candidate-service
+          uri: lb://candidate-service
+          predicates:
+            - Path=/api/platform/health/candidate-service
+            - Method=GET
+          filters:
+            - SetPath=/health
+          metadata:
+            connect-timeout: 2000
+            response-timeout: 5000
+
+        - id: health-application-service
+          uri: lb://application-service
+          predicates:
+            - Path=/api/platform/health/application-service
+            - Method=GET
+          filters:
+            - SetPath=/health
+          metadata:
+            connect-timeout: 2000
+            response-timeout: 5000
+
+        - id: health-interview-service
+          uri: lb://interview-service
+          predicates:
+            - Path=/api/platform/health/interview-service
+            - Method=GET
+          filters:
+            - SetPath=/health
+          metadata:
+            connect-timeout: 2000
+            response-timeout: 5000
+
+        - id: health-notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/platform/health/notification-service
+            - Method=GET
+          filters:
+            - SetPath=/health
+          metadata:
+            connect-timeout: 2000
+            response-timeout: 5000
+
         - id: user-service
           uri: lb://user-service
           predicates:
@@ -64,3 +141,17 @@ eureka:
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
   instance:
     prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      base-path: /
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: never
+      show-components: never
+  metrics:
+    tags:
+      application: ${spring.application.name}

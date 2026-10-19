@@ -6,7 +6,7 @@
   <title>HireFlow – Enterprise Talent Acquisition & Pipeline</title>
   <meta name="description" content="HireFlow is a modern recruitment orchestration platform powered by Spring Cloud microservices, unified service discovery, and automated pipelines.">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231d4ed8'><rect width='24' height='24' rx='6'/><path d='M7 6v12M17 6v12M7 12h10' stroke='white' stroke-width='2.5' stroke-linecap='round'/></svg>">
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/styles.css?v=monitoring-1">
 </head>
 <body>
   <div class="app-wrapper">
@@ -71,6 +71,13 @@
           </div>
         </button>
 
+        <button class="nav-item" data-tab="tab-health">
+          <div class="nav-item-left">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+            <span>Service Health</span>
+          </div>
+        </button>
+
         <button class="nav-item" data-tab="tab-architecture">
           <div class="nav-item-left">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -81,7 +88,7 @@
 
       <div class="sidebar-footer">
         <div class="sidebar-status-box">
-          <div><span class="status-dot-green"></span>Gateway :8088</div>
+          <div>HireFlow Platform</div>
           <a href="http://localhost:8761" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 500;">Eureka &rarr;</a>
         </div>
 
@@ -136,7 +143,7 @@
           <div class="view-header">
             <div>
               <h1 class="view-title">Talent Operations Overview</h1>
-              <p class="view-desc">Live recruitment metrics, candidate pipeline health, and Eureka service telemetry.</p>
+              <p class="view-desc">Recruitment metrics, candidate pipeline progress, and active hiring positions.</p>
             </div>
           </div>
 
@@ -198,7 +205,7 @@
             </div>
           </div>
 
-          <!-- Two-Column Workspace -->
+          <!-- Recruitment Workspace -->
           <div class="overview-layout">
             <!-- Left: Highlights & Quick Management -->
             <div style="display: flex; flex-direction: column; gap: 1.5rem;">
@@ -213,18 +220,6 @@
               </div>
             </div>
 
-            <!-- Right: Service Telemetry -->
-            <div class="panel-card">
-              <div class="panel-header">
-                <span class="panel-title">Cluster Telemetry</span>
-                <span class="badge badge-open">All 8 Online</span>
-              </div>
-              <div class="panel-body">
-                <div class="service-list" id="services-health-grid">
-                  <!-- Populated by JS -->
-                </div>
-              </div>
-            </div>
           </div>
         </section>
 
@@ -400,8 +395,35 @@
         </section>
 
         <!-- ============================================================ -->
-        <!-- VIEW 7: EUREKA TOPOLOGY                                      -->
+        <!-- PLATFORM: SERVICE HEALTH AND EUREKA TOPOLOGY                 -->
         <!-- ============================================================ -->
+        <section id="tab-health" class="tab-pane">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Service Health</h1>
+              <p class="view-desc">Current service health, checked through the gateway. Refreshes every 30 seconds while this view is open.</p>
+            </div>
+            <button class="btn btn-primary" id="refresh-health-btn">Check health</button>
+          </div>
+          <div class="panel-card">
+            <div class="panel-header">
+              <span class="panel-title">Microservices</span>
+              <span id="health-summary" role="status" aria-live="polite">Not checked</span>
+            </div>
+            <div class="panel-body">
+              <p class="view-desc" id="health-checked-at">No checks yet. A failed gateway request means health could not be verified.</p>
+              <div class="service-list" id="services-health-grid"></div>
+            </div>
+          </div>
+          <div class="panel-card monitoring-links">
+            <h2 class="panel-title">Monitoring history</h2>
+            <p class="view-desc">Grafana shows health history, request rates, errors, and JVM metrics. Prometheus collects metrics independently of this page.</p>
+            <a class="btn btn-secondary" href="http://localhost:3000/d/hireflow-services" target="_blank" rel="noopener noreferrer">Open local Grafana</a>
+            <a class="btn btn-secondary" href="http://localhost:9090/targets" target="_blank" rel="noopener noreferrer">Open local Prometheus</a>
+            <p class="view-desc">These links use the monitoring ports on the Docker host. For remote deployments, use your operator-provided monitoring URLs.</p>
+          </div>
+        </section>
+
         <section id="tab-architecture" class="tab-pane">
           <div class="view-header">
             <div>
@@ -716,6 +738,6 @@
     </div>
   </div>
 
-  <script src="js/app.js"></script>
+  <script src="js/app.js?v=monitoring-1"></script>
 </body>
 </html>

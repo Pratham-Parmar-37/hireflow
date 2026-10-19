@@ -3,7 +3,7 @@
 // High-performance Vanilla JavaScript for Microservices Routing & Real-time State
 // ==============================================================================
 
-const API_BASE = (window.location.protocol.startsWith('http') && window.location.port !== '')
+const API_BASE = window.location.protocol.startsWith('http')
   ? ''
   : 'http://localhost:8088';
 
@@ -17,14 +17,14 @@ const state = {
   users: [],
   notifications: [],
   serviceHealth: [
-    { name: 'eureka-server', port: 8761, desc: 'Central Service Registry & Discovery Server', tech: 'Spring Cloud Netflix Eureka', status: 'healthy', latency: '3ms' },
-    { name: 'api-gateway', port: 8088, desc: 'Dynamic Reactive Reverse Proxy & UI Host', tech: 'Spring Cloud Gateway (WebFlux)', status: 'healthy', latency: '2ms' },
-    { name: 'user-service', port: 8081, desc: 'Role-based User Profiles & Identity Management', tech: 'Spring Boot 3 + MongoDB', status: 'healthy', latency: '8ms' },
-    { name: 'company-job-service', port: 8082, desc: 'Enterprise Directory & Job Openings Catalog', tech: 'Spring Boot 3 + MongoDB', status: 'healthy', latency: '6ms' },
-    { name: 'candidate-service', port: 8083, desc: 'Talent Pool, Skills Graph & Resume Profiles', tech: 'Spring Boot 3 + MongoDB', status: 'healthy', latency: '7ms' },
-    { name: 'application-service', port: 8084, desc: 'Hiring Workflow & OpenFeign Job Consumer', tech: 'Spring Boot 3 + OpenFeign', status: 'healthy', latency: '11ms' },
-    { name: 'interview-service', port: 8085, desc: 'Technical Screening & Evaluation Rounds', tech: 'Spring Boot 3 + MongoDB', status: 'healthy', latency: '8ms' },
-    { name: 'notification-service', port: 8086, desc: 'Event-driven Candidate Alerts & Messages', tech: 'Spring Boot 3 + MongoDB', status: 'healthy', latency: '5ms' }
+    { name: 'eureka-server', port: 8761, desc: 'Central Service Registry & Discovery Server', tech: 'Spring Cloud Netflix Eureka', status: 'unknown', latency: null },
+    { name: 'api-gateway', port: 8088, desc: 'Dynamic Reactive Reverse Proxy & UI Host', tech: 'Spring Cloud Gateway (WebFlux)', status: 'unknown', latency: null },
+    { name: 'user-service', port: 8081, desc: 'Role-based User Profiles & Identity Management', tech: 'Spring Boot 3 + MongoDB', status: 'unknown', latency: null },
+    { name: 'company-job-service', port: 8082, desc: 'Enterprise Directory & Job Openings Catalog', tech: 'Spring Boot 3 + MongoDB', status: 'unknown', latency: null },
+    { name: 'candidate-service', port: 8083, desc: 'Talent Pool, Skills Graph & Resume Profiles', tech: 'Spring Boot 3 + MongoDB', status: 'unknown', latency: null },
+    { name: 'application-service', port: 8084, desc: 'Hiring Workflow & OpenFeign Job Consumer', tech: 'Spring Boot 3 + OpenFeign', status: 'unknown', latency: null },
+    { name: 'interview-service', port: 8085, desc: 'Technical Screening & Evaluation Rounds', tech: 'Spring Boot 3 + MongoDB', status: 'unknown', latency: null },
+    { name: 'notification-service', port: 8086, desc: 'Event-driven Candidate Alerts & Messages', tech: 'Spring Boot 3 + MongoDB', status: 'unknown', latency: null }
   ]
 };
 
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initSearchAndFilters();
   initActionButtons();
   fetchAllData();
-  renderServiceHealth();
+  initServiceHealth();
 });
 
 // ==============================================================================
@@ -82,6 +82,7 @@ function initTabs() {
     'tab-pipeline': 'Hiring Pipeline',
     'tab-interviews': 'Interviews',
     'tab-companies': 'Companies & Team',
+    'tab-health': 'Service Health',
     'tab-architecture': 'Eureka Topology'
   };
 
@@ -91,6 +92,7 @@ function initTabs() {
       document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
 
       tab.classList.add('active');
+      if (tab.dataset.tab === 'tab-health') checkHealthPings();
       const targetPane = document.getElementById(tab.dataset.tab);
       if (targetPane) {
         targetPane.classList.add('active');
@@ -126,7 +128,6 @@ async function fetchAllData() {
       fetchNotifications()
     ]);
     updateKPIs();
-    checkHealthPings();
   } catch (err) {
     console.error('Error fetching data:', err);
     showToast('Failed to load microservices data', 'error');
@@ -221,45 +222,69 @@ async function fetchNotifications() {
 // ==============================================================================
 // Health Checks & Pings
 // ==============================================================================
-async function checkHealthPings() {
-  for (const s of state.serviceHealth) {
-    const start = performance.now();
-    try {
-      let endpoint = '';
-      if (s.name === 'eureka-server') endpoint = 'http://localhost:8761';
-      else if (s.name === 'api-gateway') endpoint = `${API_BASE}/api/jobs`;
-      else if (s.name === 'user-service') endpoint = `${API_BASE}/api/users`;
-      else if (s.name === 'company-job-service') endpoint = `${API_BASE}/api/jobs`;
-      else if (s.name === 'candidate-service') endpoint = `${API_BASE}/api/candidates`;
-      else if (s.name === 'application-service') endpoint = `${API_BASE}/api/applications`;
-      else if (s.name === 'interview-service') endpoint = `${API_BASE}/api/interviews`;
-      else if (s.name === 'notification-service') endpoint = `${API_BASE}/api/notifications`;
+let healthCheckInFlight = false;
 
-      await fetch(endpoint, { method: 'GET', mode: 'no-cors' });
-      const elapsed = Math.round(performance.now() - start);
-      s.latency = `${elapsed}ms`;
-      s.status = 'healthy';
-    } catch {
-      s.status = 'healthy';
-    }
-  }
+function initServiceHealth() {
   renderServiceHealth();
+  document.getElementById('refresh-health-btn')?.addEventListener('click', checkHealthPings);
+  setInterval(() => {
+    if (!document.hidden && document.getElementById('tab-health')?.classList.contains('active')) {
+      checkHealthPings();
+    }
+  }, 30000);
+}
+
+async function checkHealthPings() {
+  if (healthCheckInFlight) return;
+  healthCheckInFlight = true;
+  const button = document.getElementById('refresh-health-btn');
+  if (button) button.disabled = true;
+  document.getElementById('health-summary').textContent = 'Checking…';
+  state.serviceHealth.forEach(s => { s.status = 'checking'; s.latency = null; });
+  renderServiceHealth();
+  try {
+    await Promise.all(state.serviceHealth.map(async s => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 7000);
+      const start = performance.now();
+      try {
+        const endpoint = s.name === 'api-gateway' ? '/health' : `/api/platform/health/${s.name}`;
+        const response = await fetch(`${API_BASE}${endpoint}`, { signal: controller.signal, cache: 'no-store' });
+        const health = await response.json();
+        if (response.ok && health.status === 'UP') s.status = 'healthy';
+        else if (health.status === 'DOWN' || health.status === 'OUT_OF_SERVICE') s.status = 'down';
+        else s.status = 'unknown';
+        s.latency = `${Math.round(performance.now() - start)}ms`;
+      } catch {
+        s.status = 'unknown';
+        s.latency = null;
+      } finally {
+        clearTimeout(timeout);
+      }
+    }));
+    const healthy = state.serviceHealth.filter(s => s.status === 'healthy').length;
+    document.getElementById('health-summary').textContent = `${healthy} of ${state.serviceHealth.length} healthy`;
+    document.getElementById('health-checked-at').textContent = `Last checked: ${new Date().toLocaleTimeString()}. Response times include gateway routing. Unverified means the check failed or returned an unexpected response.`;
+  } finally {
+    healthCheckInFlight = false;
+    if (button) button.disabled = false;
+    renderServiceHealth();
+  }
 }
 
 function renderServiceHealth() {
   const container = document.getElementById('services-health-grid');
   if (!container) return;
-
+  const labels = { healthy: 'Healthy', down: 'Unhealthy', unknown: 'Unverified', checking: 'Checking' };
   container.innerHTML = state.serviceHealth.map(s => `
     <div class="service-row">
       <div class="service-row-left">
-        <span class="status-dot-indicator ${s.status === 'healthy' ? '' : 'down'}"></span>
+        <span class="status-dot-indicator ${s.status === 'healthy' ? '' : s.status === 'down' ? 'down' : 'unknown'}"></span>
         <span class="service-row-name">${escapeHtml(s.name)}</span>
-        <span class="service-row-port">:${s.port}</span>
       </div>
       <div class="service-row-right">
-        <span class="service-framework-tag">${escapeHtml(s.tech)}</span>
-        <span class="latency-pill">${s.latency}</span>
+        <span>${labels[s.status]}</span>
+        <span class="latency-pill">${s.latency || '—'}</span>
       </div>
     </div>
   `).join('');
@@ -669,6 +694,10 @@ function closeModal(id) {
 
 function initActionButtons() {
   document.getElementById('refresh-all-btn')?.addEventListener('click', () => {
+    if (document.getElementById('tab-health')?.classList.contains('active')) {
+      checkHealthPings();
+      return;
+    }
     showToast('Refreshing microservices data...', 'info');
     fetchAllData();
   });

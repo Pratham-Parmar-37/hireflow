@@ -7,7 +7,8 @@ HireFlow AI is a comprehensive, enterprise-grade talent acquisition and hiring p
 ### Core Architecture & Capabilities
 
 - **Unified API Gateway & UI Host**: Single reactive entry point on port `8088` (mapping internally to `8080`) providing dynamic reverse proxy routing (`lb://`), global CORS handling, and hosting the enterprise web dashboard.
-- **Enterprise Web Dashboard**: Human-crafted, responsive interface supporting dual themes (Crisp Enterprise Light & Sleek Graphite Dark) with real-time KPI metrics, Kanban pipeline, job requisitions, candidate management, and live Eureka cluster telemetry.
+- **Enterprise Web Dashboard**: Responsive interface supporting dual themes with recruitment KPIs, Kanban pipeline, job requisitions, and candidate management. Operational status is isolated in Platform > Service Health.
+- **Monitoring**: All eight Spring services expose `/health` and `/prometheus`, with Prometheus collection, HTTP health probes, alert rules, and a provisioned Grafana dashboard. See [monitoring setup and verification](docs/monitoring.md).
 - **Microservices Domain Stack**: 6 domain services (`user-service`, `company-job-service`, `candidate-service`, `application-service`, `interview-service`, `notification-service`) with full CRUD operations.
 - **Service Discovery & Registry**: Netflix Eureka Server (`:8761`) maintaining real-time heartbeat health checks and dynamic client registration.
 - **Database-per-Service Pattern**: 6 completely isolated MongoDB databases ensuring strict data encapsulation and domain boundary autonomy.

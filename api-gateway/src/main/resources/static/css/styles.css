@@ -634,7 +634,7 @@ body {
 /* Two-Column Overview Layout */
 .overview-layout {
   display: grid;
-  grid-template-columns: 2fr 1.1fr;
+  grid-template-columns: 1fr;
   gap: 1.5rem;
   align-items: start;
 }
@@ -1354,3 +1354,11 @@ body {
   .overview-layout { grid-template-columns: 1fr; }
   .content-workspace { padding: 1rem; }
 }
+
+/* Operational status is isolated from the recruitment overview. */
+.status-dot-indicator.unknown { background: var(--text-secondary); }
+.monitoring-links { margin-top: 1.5rem; padding: 1.5rem; }
+.monitoring-links .btn { margin: 1rem 0.5rem 1rem 0; }
+#tab-health .service-row { flex-wrap: wrap; gap: 0.75rem; }
+#tab-health .service-row-name { overflow-wrap: anywhere; }
+#health-checked-at { margin-bottom: 1rem; }
