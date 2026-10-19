@@ -1,23 +1,19 @@
 # HireFlow AI – Intelligent Recruitment & Talent Acquisition Platform
 
-## Phase 2 – Development of Microservices
+### Project Overview
 
-### Project Description
+HireFlow AI is a comprehensive, enterprise-grade talent acquisition and hiring pipeline platform built on a distributed **Microservices Architecture**. Developed as part of MCA Semester 3 coursework for the subject **"Microservices and Architecture"**, this platform provides end-to-end recruitment lifecycle orchestration with independent, loosely coupled services, centralized routing, automated CI/CD, and a modern web dashboard.
 
-HireFlow AI is a recruitment/hiring platform designed using **Microservices Architecture**. This project is developed as part of MCA Semester 3 coursework for the subject **"Microservices and Architecture"**.
+### Core Architecture & Capabilities
 
-### Phase 2 Objective
-
-Build **6 Spring Boot microservices** with a central **API Gateway**:
-- **API Gateway** for centralized client entry, request routing, and load balancing
-- Basic CRUD operations for each service
-- MongoDB database-per-service architecture
-- Inter-service communication using OpenFeign
-- **Eureka Server** for service registration and discovery
-- **Swagger/OpenAPI** interactive API documentation
-- Proper REST API documentation
-
-This phase focuses on demonstrating core microservice concepts: independently deployable services, each owning its own database, communicating through lightweight HTTP mechanisms, discovering each other via a central service registry, and providing interactive API documentation.
+- **Unified API Gateway & UI Host**: Single reactive entry point on port `8088` (mapping internally to `8080`) providing dynamic reverse proxy routing (`lb://`), global CORS handling, and hosting the enterprise web dashboard.
+- **Enterprise Web Dashboard**: Human-crafted, responsive interface supporting dual themes (Crisp Enterprise Light & Sleek Graphite Dark) with real-time KPI metrics, Kanban pipeline, job requisitions, candidate management, and live Eureka cluster telemetry.
+- **Microservices Domain Stack**: 6 domain services (`user-service`, `company-job-service`, `candidate-service`, `application-service`, `interview-service`, `notification-service`) with full CRUD operations.
+- **Service Discovery & Registry**: Netflix Eureka Server (`:8761`) maintaining real-time heartbeat health checks and dynamic client registration.
+- **Database-per-Service Pattern**: 6 completely isolated MongoDB databases ensuring strict data encapsulation and domain boundary autonomy.
+- **Declarative Inter-Service Communication**: Spring Cloud OpenFeign client enabling `application-service` to dynamically fetch job details from `company-job-service` via Eureka load balancing (`/api/applications/{id}/with-job`).
+- **Swagger / OpenAPI Documentation**: Interactive API documentation available on every service.
+- **Automated CI/CD Pipeline**: Automated Jenkins pipeline with Git SCM polling, parallel Maven build, single-root Docker containerization, image registry publishing, and Docker Compose orchestration.
 
 ---
 
@@ -843,27 +839,6 @@ HireFlow/
 └── docs/
     └── architecture.md
 ```
-
----
-
-## Scope Limitations (Phase 2)
-
-The following features are **intentionally NOT implemented** in Phase 2:
-
-- ❌ JWT authentication / Spring Security / login
-- ❌ Password encryption
-- ❌ AI/ML resume processing
-- ❌ File upload/storage
-- ❌ Email/SMS notifications (service only stores records)
-- ✅ API Gateway (Implemented via Spring Cloud Gateway on port 8080)
-- ✅ Docker & Docker Compose containerization (Implemented)
-- ❌ Kubernetes orchestration (Planned for future phases)
-- ❌ Kafka / RabbitMQ (async messaging)
-- ❌ Redis caching
-- ❌ Frontend / React
-- ❌ Cloud deployment
-
-These features may be implemented in future phases.
 
 ---
 
