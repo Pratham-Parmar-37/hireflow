@@ -8,7 +8,6 @@ pipeline {
 
     environment {
         IMAGE_NAME = 'hireflow'
-        IMAGE_TAG = "${BUILD_NUMBER}"
         REGISTRY_TAG = 'hireflow:latest'
         // GitHub credentials ID configured in Jenkins (Manage Jenkins -> Credentials)
         GIT_CREDENTIALS_ID = 'github-pat-creds'
@@ -78,9 +77,9 @@ pipeline {
                 echo '=== [Stage 3/5] Building fresh Docker image from root Dockerfile ==='
                 script {
                     if (isUnix()) {
-                        sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -t ${REGISTRY_TAG} ."
+                        sh "docker build -t ${REGISTRY_TAG} ."
                     } else {
-                        bat "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -t ${REGISTRY_TAG} ."
+                        bat "docker build -t ${REGISTRY_TAG} ."
                     }
                 }
             }
@@ -164,7 +163,7 @@ pipeline {
             echo """
 ================================================================================
    HIREFLOW AI – CI/CD PIPELINE SUCCESS!
-   - Fresh Docker Image:   ${IMAGE_NAME}:${IMAGE_TAG} & ${REGISTRY_TAG}
+   - Fresh Docker Image:   ${REGISTRY_TAG}
    - Jenkins Status:       http://localhost:8080/
    - API Gateway:          http://localhost:8088/
    - Eureka Dashboard:     http://localhost:8761/
