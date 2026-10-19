@@ -543,7 +543,7 @@ HireFlow AI includes a complete declarative **End-to-End CI/CD Pipeline** define
 
 ### Port Allocation:
 - **Jenkins Dashboard**: `http://localhost:8080/` (Running as host Windows Service)
-- **API Gateway**: `http://localhost:8088/` (Mapped to host port 8088 in Compose to avoid clash with Jenkins)
+- **API Gateway & Web Dashboard**: `http://localhost:8088/` (Interactive Web UI & Reverse Proxy, mapped to host port 8088 in Compose to avoid clash with Jenkins)
 - **Eureka Server**: `http://localhost:8761/`
 - **Microservices**: `8081` – `8086`
 
