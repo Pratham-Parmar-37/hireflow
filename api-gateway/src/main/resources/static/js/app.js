@@ -269,16 +269,21 @@ function renderServiceHealth() {
 // KPI Engine
 // ==============================================================================
 function updateKPIs() {
-  document.getElementById('kpi-jobs').innerText = state.jobs.length;
-  document.getElementById('kpi-candidates').innerText = state.candidates.length;
-  document.getElementById('kpi-applications').innerText = state.applications.length;
-  document.getElementById('kpi-interviews').innerText = state.interviews.length;
-  document.getElementById('kpi-companies').innerText = state.companies.length;
+  const setEl = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.innerText = val;
+  };
 
-  document.getElementById('badge-jobs-count').innerText = state.jobs.length;
-  document.getElementById('badge-candidates-count').innerText = state.candidates.length;
-  document.getElementById('badge-applications-count').innerText = state.applications.length;
-  document.getElementById('badge-interviews-count').innerText = state.interviews.length;
+  setEl('kpi-jobs', state.jobs.length);
+  setEl('kpi-candidates', state.candidates.length);
+  setEl('kpi-applications', state.applications.length);
+  setEl('kpi-interviews', state.interviews.length);
+  setEl('kpi-companies', state.companies.length);
+
+  setEl('badge-jobs-count', state.jobs.length);
+  setEl('badge-candidates-count', state.candidates.length);
+  setEl('badge-applications-count', state.applications.length);
+  setEl('badge-interviews-count', state.interviews.length);
 }
 
 // ==============================================================================
