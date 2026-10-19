@@ -96,14 +96,16 @@ pipeline {
                 echo '=== [Stage 4/5] Stopping old containers and launching fresh deployment ==='
                 script {
                     if (isUnix()) {
-                        sh 'docker compose -p hireflow down || true'
-                        sh 'docker compose -p hireflow up -d'
+                        sh 'docker compose down || true'
+                        sh 'docker rm -f hireflow-mongodb hireflow-eureka-server hireflow-api-gateway hireflow-user-service hireflow-company-job-service hireflow-candidate-service hireflow-application-service hireflow-interview-service hireflow-notification-service 2>/dev/null || true'
+                        sh 'docker compose up -d'
                         sh 'sleep 20'
-                        sh 'docker compose -p hireflow ps'
+                        sh 'docker compose ps'
                     } else {
-                        bat 'docker compose -p hireflow down || ver > nul'
-                        bat 'docker compose -p hireflow up -d'
-                        bat 'powershell -Command "Start-Sleep -Seconds 20; docker compose -p hireflow ps"'
+                        bat 'docker compose down || ver > nul'
+                        bat 'docker rm -f hireflow-mongodb hireflow-eureka-server hireflow-api-gateway hireflow-user-service hireflow-company-job-service hireflow-candidate-service hireflow-application-service hireflow-interview-service hireflow-notification-service 2>nul || ver > nul'
+                        bat 'docker compose up -d'
+                        bat 'powershell -Command "Start-Sleep -Seconds 20; docker compose ps"'
                     }
                 }
             }
