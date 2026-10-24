@@ -126,6 +126,11 @@ async function fetchAllData() {
       fetchUsers(),
       fetchNotifications()
     ]);
+    // These views combine records fetched from multiple services. Render again
+    // after all requests settle so response order cannot leave fallback labels.
+    renderJobs();
+    renderPipeline();
+    renderInterviews();
     updateKPIs();
   } catch (err) {
     console.error('Error fetching data:', err);

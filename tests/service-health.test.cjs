@@ -75,3 +75,32 @@ test('recruitment refresh does not probe service health', async () => {
   assert.equal(urls.length, 7);
   assert.ok(urls.every(url => !url.includes('health')));
 });
+
+test('recruitment views resolve related records when companies arrive last', async () => {
+  let releaseCompanies;
+  const companiesReady = new Promise(resolve => { releaseCompanies = resolve; });
+  const instance = app(async url => {
+    const resource = url.split('/').pop();
+    if (resource === 'companies') await companiesReady;
+    const rows = {
+      jobs: [{ id: 'job-1', companyId: 'company-1' }],
+      companies: [{ id: 'company-1', companyName: 'Example Company' }],
+      candidates: [], applications: [], interviews: [], users: [], notifications: []
+    };
+    return { ok: true, json: async () => rows[resource] };
+  });
+  instance.run(`
+    var renderedCompany = '';
+    renderJobs = () => {
+      renderedCompany = state.companies.find(c => c.id === state.jobs[0]?.companyId)?.companyName || 'Hiring Partner';
+    };
+    renderCandidates = renderPipeline = renderInterviews = renderCompanies =
+      renderUsers = renderNotifications = populateCompanySelects = updateKPIs = () => {};
+  `);
+  const refresh = instance.run('fetchAllData()');
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(instance.run('renderedCompany'), 'Hiring Partner');
+  releaseCompanies();
+  await refresh;
+  assert.equal(instance.run('renderedCompany'), 'Example Company');
+});
