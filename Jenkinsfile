@@ -14,7 +14,9 @@ pipeline {
     }
 
     triggers {
-        // Automatically trigger immediately when a GitHub push event is received via Webhook
+        // Automatically check for GitHub repository changes every 1 minute (fastest supported interval)
+        pollSCM('* * * * *')
+        // Also triggers immediately if GitHub Webhook ping is received
         githubPush()
     }
 

@@ -14,7 +14,7 @@ HireFlow AI is a comprehensive, enterprise-grade talent acquisition and hiring p
 - **Database-per-Service Pattern**: 6 completely isolated MongoDB databases ensuring strict data encapsulation and domain boundary autonomy.
 - **Declarative Inter-Service Communication**: Spring Cloud OpenFeign client enabling `application-service` to dynamically fetch job details from `company-job-service` via Eureka load balancing (`/api/applications/{id}/with-job`).
 - **Swagger / OpenAPI Documentation**: Interactive API documentation available on every service.
-- **Automated CI/CD Pipeline**: Automated Jenkins pipeline triggered instantly via GitHub Webhooks on push events, featuring parallel Maven build, single-root Docker containerization, and Docker Compose orchestration.
+- **Automated CI/CD Pipeline**: Automated Jenkins pipeline with 1-minute Git SCM polling (`* * * * *`) and webhook support, featuring parallel Maven build, single-root Docker containerization, and Docker Compose orchestration.
 
 ---
 
@@ -527,7 +527,7 @@ HireFlow AI includes a complete declarative **End-to-End CI/CD Pipeline** define
            ▼
    GitHub Repository
            │
-           ▼ (Instant GitHub Webhook)
+           ▼ (Poll SCM every 1m / Instant Webhook)
   Jenkins CI/CD Pipeline
   ┌──────────────────────────┐
   │ 1. SCM Checkout          │  Clones latest commit from GitHub repository
@@ -564,7 +564,8 @@ HireFlow AI includes a complete declarative **End-to-End CI/CD Pipeline** define
 1. Open the Jenkins Web Dashboard: **[http://localhost:8080](http://localhost:8080)**
 2. Click **New Item** → Enter item name: `HireFlow-CI-CD` → Select **Pipeline** → Click **OK**.
 3. Under **Build Triggers**:
-   - Check **GitHub hook trigger for GITScm polling** (triggers immediately upon receiving a push webhook from GitHub).
+   - Check **Poll SCM** with schedule: `* * * * *` (checks GitHub every 1 minute — the fastest interval supported by Jenkins cron, requiring zero tunnels, tokens, or signups).
+   - *(Optional)* Check **GitHub hook trigger for GITScm polling** if you also configure a Webhook.
 4. Under **Pipeline**:
    - Definition: **Pipeline script from SCM**
    - SCM: **Git**
@@ -572,15 +573,7 @@ HireFlow AI includes a complete declarative **End-to-End CI/CD Pipeline** define
    - Credentials: Select your GitHub credentials if your repository is private (or add via *Add → Jenkins* with ID `github-credentials`)
    - Branch Specifier: `*/main`
    - Script Path: `Jenkinsfile`
-5. Click **Save** and click **Build Now** once to execute the initial run and register the webhook trigger!
-
-### Configuring the GitHub Webhook (Instant Triggers):
-To have GitHub instantly trigger Jenkins whenever code is pushed:
-1. In your GitHub repository, open **Settings** → **Webhooks** → **Add webhook**.
-2. **Payload URL**: `http://<JENKINS_HOST>:8080/github-webhook/`
-3. **Content type**: `application/json`
-4. **Which events would you like to trigger this webhook?**: Select **Just the `push` event**.
-5. Click **Add webhook**.
+5. Click **Save** and click **Build Now** once to execute the initial run!
 
 ---
 
