@@ -77,13 +77,6 @@
             <span>Service Health</span>
           </div>
         </button>
-
-        <button class="nav-item" data-tab="tab-architecture">
-          <div class="nav-item-left">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            <span>Eureka Topology</span>
-          </div>
-        </button>
       </nav>
 
       <div class="sidebar-footer">
@@ -419,44 +412,6 @@
           </div>
         </section>
 
-        <section id="tab-architecture" class="tab-pane">
-          <div class="view-header">
-            <div>
-              <h1 class="view-title">System Architecture & Eureka Topology</h1>
-              <p class="view-desc">Distributed Spring Cloud architecture, dynamic reverse proxying, and Docker Compose stack.</p>
-            </div>
-            <div>
-              <a href="http://localhost:8761" target="_blank" class="btn btn-primary">
-                Open Eureka Dashboard (:8761)
-              </a>
-            </div>
-          </div>
-
-          <div class="panel-card" style="padding: 1.5rem; margin-bottom: 2rem;">
-            <h2 style="font-family: var(--font-display); font-size: 1.05rem; color: var(--text-primary); margin-bottom: 0.85rem;">Spring Cloud Microservices Topology</h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
-              <div style="padding: 1rem; background: var(--bg-subtle); border-radius: 6px; border: 1px solid var(--border-subtle);">
-                <div style="color: var(--primary); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">API Gateway (:8088 -> 8080)</div>
-                <p style="font-size: 0.775rem; color: var(--text-secondary);">Central entry point routing <code>/api/**</code> via Eureka client load balancing (<code>lb://&lt;service-name&gt;</code>) and hosting the web dashboard.</p>
-              </div>
-
-              <div style="padding: 1rem; background: var(--bg-subtle); border-radius: 6px; border: 1px solid var(--border-subtle);">
-                <div style="color: #7c3aed; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">Eureka Registry (:8761)</div>
-                <p style="font-size: 0.775rem; color: var(--text-secondary);">Netflix Eureka server where all microservices register with automatic heartbeat health checks.</p>
-              </div>
-
-              <div style="padding: 1rem; background: var(--bg-subtle); border-radius: 6px; border: 1px solid var(--border-subtle);">
-                <div style="color: var(--success); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">OpenFeign Cross-Service Call</div>
-                <p style="font-size: 0.775rem; color: var(--text-secondary);">Application Service calls Company Job Service via declarative Feign client: <code>/api/applications/{id}/with-job</code>.</p>
-              </div>
-
-              <div style="padding: 1rem; background: var(--bg-subtle); border-radius: 6px; border: 1px solid var(--border-subtle);">
-                <div style="color: var(--warning); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">MongoDB Isolation</div>
-                <p style="font-size: 0.775rem; color: var(--text-secondary);">Database-per-service pattern with 6 isolated databases hosted on MongoDB (:27017).</p>
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
     </main>
 

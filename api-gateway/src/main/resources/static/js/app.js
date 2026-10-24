@@ -82,8 +82,7 @@ function initTabs() {
     'tab-pipeline': 'Hiring Pipeline',
     'tab-interviews': 'Interviews',
     'tab-companies': 'Companies & Team',
-    'tab-health': 'Service Health',
-    'tab-architecture': 'Eureka Topology'
+    'tab-health': 'Service Health'
   };
 
   tabButtons.forEach(tab => {
@@ -146,13 +145,23 @@ async function fetchJobs() {
   }
 }
 
-async function fetchCandidates() {
+async function fetchCandidates(isRetry = false) {
   const container = document.getElementById('candidates-container');
   try {
     const res = await fetch(`${API_BASE}/api/candidates`);
     if (res.ok) {
       state.candidates = await res.json();
       renderCandidates();
+    } else if (res.status === 503 && !isRetry) {
+      // Service is warming up or registering with Eureka
+      if (container && (!state.candidates || state.candidates.length === 0)) {
+        container.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <p style="color: var(--text-secondary);">Connecting to Candidate Service (discovering via Eureka)...</p>
+          </div>
+        `;
+      }
+      setTimeout(() => fetchCandidates(true), 3000);
     } else {
       if (container && (!state.candidates || state.candidates.length === 0)) {
         container.innerHTML = `
@@ -164,6 +173,10 @@ async function fetchCandidates() {
     }
   } catch (e) {
     console.warn('Candidate service unreachable', e);
+    if (!isRetry) {
+      setTimeout(() => fetchCandidates(true), 3000);
+      return;
+    }
     if (container && (!state.candidates || state.candidates.length === 0)) {
       container.innerHTML = `
         <div class="empty-state" style="grid-column: 1 / -1;">
