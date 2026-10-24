@@ -334,7 +334,7 @@ function renderJobs() {
     if (filtered.length === 0) {
       container.innerHTML = `
         <div class="empty-state" style="grid-column: 1 / -1;">
-          <p>No job postings match your filters. Click 'Post Job Opening' or 'Seed Sample Data'.</p>
+          <p>No job postings match your filters. Click 'Post Job Opening' to create a requisition.</p>
         </div>
       `;
     } else {
@@ -378,7 +378,7 @@ function renderJobs() {
   const overviewRecent = document.getElementById('overview-recent-jobs');
   if (overviewRecent) {
     if (state.jobs.length === 0) {
-      overviewRecent.innerHTML = `<div class="empty-state"><p>No open requisitions found. Click "Post Job Opening" or "Seed Sample Data".</p></div>`;
+      overviewRecent.innerHTML = `<div class="empty-state"><p>No open requisitions found. Click "Post Job Opening" to create one.</p></div>`;
     } else {
       overviewRecent.innerHTML = state.jobs.slice(0, 4).map(job => {
         const company = state.companies.find(c => c.id === job.companyId) || { companyName: 'Hiring Partner' };
@@ -702,9 +702,7 @@ function initActionButtons() {
     fetchAllData();
   });
 
-  document.getElementById('seed-demo-btn')?.addEventListener('click', () => {
-    seedDemoData();
-  });
+
 
   document.getElementById('notifications-toggle-btn')?.addEventListener('click', () => {
     const drawer = document.getElementById('notifications-drawer');
@@ -999,168 +997,7 @@ window.viewFeignComposite = async function(appId) {
   }
 };
 
-// ==============================================================================
-// Demo Data Seeder
-// ==============================================================================
 
-/** Helper: fetch all items from an endpoint and delete each one by ID */
-async function clearCollection(endpoint) {
-  try {
-    const res = await fetch(`${API_BASE}${endpoint}`);
-    if (!res.ok) return;
-    const items = await res.json();
-    if (!Array.isArray(items)) return;
-    await Promise.all(
-      items.map(item =>
-        fetch(`${API_BASE}${endpoint}/${item.id}`, { method: 'DELETE' }).catch(() => {})
-      )
-    );
-  } catch { /* service may be down – skip */ }
-}
-
-async function seedDemoData() {
-  showToast('Clearing old data & seeding fresh sample records...', 'info');
-
-  try {
-    // ── Step 1: Wipe existing data (order matters – dependents first) ──
-    await clearCollection('/api/notifications');
-    await clearCollection('/api/interviews');
-    await clearCollection('/api/applications');
-    await clearCollection('/api/candidates');
-    await clearCollection('/api/jobs');
-    await clearCollection('/api/companies');
-
-    // ── Step 2: Seed fresh records ──────────────────────────────────────
-    const compRes = await fetch(`${API_BASE}/api/companies`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        companyName: 'Starlight Technologies',
-        industry: 'Distributed Cloud Systems',
-        location: 'San Francisco, CA & Remote',
-        website: 'https://starlight.tech',
-        description: 'Enterprise cloud infrastructure and distributed platform engineering.'
-      })
-    });
-    const company = await compRes.json();
-
-    const jobRes1 = await fetch(`${API_BASE}/api/jobs`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: 'Senior Java & Spring Cloud Architect',
-        companyId: company.id,
-        employmentType: 'REMOTE',
-        salary: '18-28 LPA ($140,000)',
-        experienceRequired: '4-7 years',
-        description: 'Architect and scale fault-tolerant microservices using Spring Boot 3, Spring Cloud Gateway, Eureka discovery, and Docker Compose.',
-        status: 'OPEN',
-        postedByUserId: 'admin'
-      })
-    });
-    const job1 = await jobRes1.json();
-
-    const jobRes2 = await fetch(`${API_BASE}/api/jobs`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: 'Full Stack Distributed Systems Engineer',
-        companyId: company.id,
-        employmentType: 'FULL_TIME',
-        salary: '14-22 LPA ($110,000)',
-        experienceRequired: '2-5 years',
-        description: 'Develop reactive Netty endpoints, high-throughput MongoDB data models, and modern user-centric interfaces.',
-        status: 'OPEN',
-        postedByUserId: 'admin'
-      })
-    });
-    const job2 = await jobRes2.json();
-
-    const candRes1 = await fetch(`${API_BASE}/api/candidates`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: 'user-pratham',
-        fullName: 'Pratham Parmar',
-        email: 'pratham@hireflow.ai',
-        skills: ['Java 17', 'Spring Boot 3', 'Spring Cloud Gateway', 'Docker', 'MongoDB', 'Jenkins CI/CD'],
-        experience: '4 years backend microservices engineering',
-        education: 'B.Tech in Computer Science',
-        resumeUrl: 'https://github.com/Pratham-Parmar-37/hireflow'
-      })
-    });
-    const candidate1 = await candRes1.json();
-
-    const candRes2 = await fetch(`${API_BASE}/api/candidates`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: 'user-alina',
-        fullName: 'Alina Vance',
-        email: 'alina.v@starlight.tech',
-        skills: ['Spring Cloud', 'Kubernetes', 'Reactive WebFlux', 'MongoDB', 'Kafka'],
-        experience: '5 years cloud-native engineering',
-        education: 'M.S. Software Systems',
-        resumeUrl: 'https://starlight.tech/resumes/alina.pdf'
-      })
-    });
-    const candidate2 = await candRes2.json();
-
-    const appRes = await fetch(`${API_BASE}/api/applications`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        candidateId: candidate1.id,
-        jobId: job1.id,
-        applicationDate: new Date().toISOString().split('T')[0],
-        status: 'SHORTLISTED'
-      })
-    });
-    const app1 = await appRes.json();
-
-    await fetch(`${API_BASE}/api/applications`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        candidateId: candidate2.id,
-        jobId: job2.id,
-        applicationDate: new Date().toISOString().split('T')[0],
-        status: 'UNDER_REVIEW'
-      })
-    });
-
-    await fetch(`${API_BASE}/api/interviews`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        candidateId: candidate1.id,
-        applicationId: app1.id,
-        interviewType: 'TECHNICAL',
-        interviewDate: new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0],
-        status: 'SCHEDULED',
-        feedback: 'Candidate demonstrated strong mastery of Eureka registry, Feign composition, and Docker CI/CD.'
-      })
-    });
-
-    await fetch(`${API_BASE}/api/notifications`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: candidate1.userId,
-        message: 'Application for Senior Java Architect moved to SHORTLISTED',
-        type: 'APPLICATION',
-        status: 'UNREAD',
-        createdAt: new Date().toLocaleTimeString()
-      })
-    });
-
-    showToast('Sample records populated successfully', 'success');
-    await fetchAllData();
-  } catch (err) {
-    console.error('Seed demo error:', err);
-    showToast('Error seeding records: ' + err.message, 'error');
-  }
-}
 
 // ==============================================================================
 // Utility Functions
