@@ -12,13 +12,13 @@
     <description>HireFlow AI - Microservices Parent Aggregator</description>
 
     <modules>
-        <module>eureka-server</module>
-        <module>api-gateway</module>
-        <module>user-service</module>
-        <module>company-job-service</module>
-        <module>candidate-service</module>
-        <module>application-service</module>
-        <module>interview-service</module>
-        <module>notification-service</module>
+        <module>src/eureka-server</module>
+        <module>src/api-gateway</module>
+        <module>src/user-service</module>
+        <module>src/company-job-service</module>
+        <module>src/candidate-service</module>
+        <module>src/application-service</module>
+        <module>src/interview-service</module>
+        <module>src/notification-service</module>
     </modules>
 </project>

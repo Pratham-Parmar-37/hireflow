@@ -11,6 +11,7 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+      - ./database/mongodb:/docker-entrypoint-initdb.d:ro
     networks:
       - hireflow-network
     restart: unless-stopped

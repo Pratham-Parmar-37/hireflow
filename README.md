@@ -33,6 +33,35 @@ HireFlow AI is a comprehensive, enterprise-grade talent acquisition and hiring p
 
 ---
 
+## Project Structure
+
+```text
+Project/
+│   ├── src/
+│   │   ├── eureka-server/
+│   │   ├── api-gateway/
+│   │   ├── user-service/
+│   │   ├── company-job-service/
+│   │   ├── candidate-service/
+│   │   ├── application-service/
+│   │   ├── interview-service/
+│   │   └── notification-service/
+│   │
+│   ├── database/
+│   │   └── mongodb/
+│   │       ├── create_database.js
+│   │       ├── create_collections.js
+│   │       └── insert_data.js
+│   │
+│   ├── docker-compose.yml
+│   ├── Dockerfile
+│   ├── Jenkinsfile
+│   ├── entrypoint.sh
+│   └── README.md
+```
+
+---
+
 ## Architecture Overview
 
 ```
@@ -150,7 +179,7 @@ Each service registers with:
 ```properties
 eureka.client.service-url.defaultZone=http://localhost:8761/eureka/
 eureka.instance.prefer-ip-address=true
-```
+`````
 
 ---
 
@@ -281,7 +310,7 @@ Verify that the image was created successfully:
 
 ```bash
 docker images hireflow:latest
-```
+`````
 
 ---
 
@@ -406,7 +435,7 @@ docker run -d --name notification-service --network hireflow-net -p 8086:8086 \
   -e SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/notification_db \
   -e EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/ \
   hireflow:latest notification-service
-```
+`````
 
 ---
 
@@ -546,7 +575,10 @@ HireFlow AI includes a complete declarative **End-to-End CI/CD Pipeline** define
 
 ### Setting Up the Pipeline in Jenkins:
 1. Open the Jenkins Web Dashboard: **[http://localhost:8080](http://localhost:8080)**
-2. Click **New Item** $ightarrow$ Enter item name: `HireFlow-CI-CD` $ightarrow$ Select **Pipeline** $ightarrow$ Click **OK**.
+2. Click **New Item** $
+ightarrow$ Enter item name: `HireFlow-CI-CD` $
+ightarrow$ Select **Pipeline** $
+ightarrow$ Click **OK**.
 3. Under **Build Triggers**:
    - Check **GitHub hook trigger for GITScm polling** (for instant push triggers via webhook).
    - Check **Poll SCM** with schedule: `H/5 * * * *` (checks every 5 minutes).
@@ -554,7 +586,8 @@ HireFlow AI includes a complete declarative **End-to-End CI/CD Pipeline** define
    - Definition: **Pipeline script from SCM**
    - SCM: **Git**
    - Repository URL: `https://github.com/Pratham-Parmar-37/hireflow.git`
-   - Credentials: Select your GitHub credentials (or add via *Add $ightarrow$ Jenkins* with ID `github-credentials`)
+   - Credentials: Select your GitHub credentials (or add via *Add $
+ightarrow$ Jenkins* with ID `github-credentials`)
    - Branch Specifier: `*/main`
    - Script Path: `Jenkinsfile`
 5. Click **Save** and click **Build Now** to execute the pipeline!
@@ -736,7 +769,7 @@ curl -X POST http://localhost:8086/api/notifications \
     "status": "UNREAD",
     "createdAt": "2026-08-31T10:00:00"
   }'
-```
+`````
 
 ---
 
@@ -839,7 +872,7 @@ HireFlow/
 │
 └── docs/
     └── architecture.md
-```
+`````
 
 ---
 

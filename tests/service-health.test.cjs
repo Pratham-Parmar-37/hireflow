@@ -16,7 +16,7 @@ function app(fetch) {
     },
     fetch, AbortController, performance, setTimeout, clearTimeout, console
   });
-  vm.runInContext(fs.readFileSync('api-gateway/src/main/resources/static/js/app.js', 'utf8'), context);
+  vm.runInContext(fs.readFileSync('src/api-gateway/src/main/resources/static/js/app.js', 'utf8'), context);
   // The existing escapeHtml helper uses DOM APIs; these tests exercise health state.
   vm.runInContext('escapeHtml = value => String(value)', context);
   return { context, elements, run: code => vm.runInContext(code, context) };
