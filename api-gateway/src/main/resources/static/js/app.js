@@ -147,14 +147,30 @@ async function fetchJobs() {
 }
 
 async function fetchCandidates() {
+  const container = document.getElementById('candidates-container');
   try {
     const res = await fetch(`${API_BASE}/api/candidates`);
     if (res.ok) {
       state.candidates = await res.json();
       renderCandidates();
+    } else {
+      if (container && (!state.candidates || state.candidates.length === 0)) {
+        container.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <p style="color: var(--danger, #ef4444);">Failed to load candidates (HTTP ${res.status}). Ensure Candidate Service is running.</p>
+          </div>
+        `;
+      }
     }
   } catch (e) {
     console.warn('Candidate service unreachable', e);
+    if (container && (!state.candidates || state.candidates.length === 0)) {
+      container.innerHTML = `
+        <div class="empty-state" style="grid-column: 1 / -1;">
+          <p style="color: var(--danger, #ef4444);">Unable to connect to Candidate Service. Check network or service health.</p>
+        </div>
+      `;
+    }
   }
 }
 
@@ -417,7 +433,7 @@ function renderCandidates() {
   if (filtered.length === 0) {
     container.innerHTML = `
       <div class="empty-state" style="grid-column: 1 / -1;">
-        <p>No candidates found. Click 'Add Candidate' or 'Seed Demo Data'.</p>
+        <p>No candidates found. Click 'Add Candidate' to register a candidate profile.</p>
       </div>
     `;
     return;
