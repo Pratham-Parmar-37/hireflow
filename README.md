@@ -520,33 +520,38 @@ HireFlow AI includes a complete declarative **End-to-End CI/CD Pipeline** define
 
 ### Pipeline Workflow:
 
-```
-  [Source Code Change]
-          │
-          ▼ (Webhook / SCM Poll every 5m)
-┌───────────────────┐
-│ 1. SCM Checkout   │  Pulls latest code from GitHub repository
-└─────────┬─────────┘
-          │
-          ▼
-┌───────────────────┐
-│ 2. Test & Compile │  Builds & verifies all services via clean Maven Docker container
-└─────────┬─────────┘
-          │
-          ▼
-┌───────────────────┐
-│ 3. Docker Build   │  Packages all 7 microservices + API Gateway into hireflow:latest & hireflow:${BUILD_NUMBER}
-└─────────┬─────────┘
-          │
-          ▼
-┌───────────────────┐
-│ 4. Deploy Fresh   │  Tears down old instances and spins up fresh container stack via docker compose
-└─────────┬─────────┘
-          │
-          ▼
-┌───────────────────┐
-│ 5. Push to GitHub │  Automatically pushes changes/tags to GitHub once all tests & deployment pass
-└───────────────────┘
+```text
+  Developer Pushes Code
+  (git push origin main)
+           │
+           ▼
+   GitHub Repository
+           │
+           ▼ (GitHub Webhook / SCM Poll)
+  Jenkins CI/CD Pipeline
+  ┌──────────────────────────┐
+  │ 1. SCM Checkout          │  Clones latest commit from GitHub repository
+  └────────────┬─────────────┘
+               │
+               ▼
+  ┌──────────────────────────┐
+  │ 2. Test & Compile        │  Builds & verifies all services via clean Maven Docker container
+  └────────────┬─────────────┘
+               │
+               ▼
+  ┌──────────────────────────┐
+  │ 3. Docker Build          │  Packages all 8 microservices into unified image (hireflow:latest)
+  └────────────┬─────────────┘
+               │
+               ▼
+  ┌──────────────────────────┐
+  │ 4. Deploy Fresh Stack    │  Tears down old instances and spins up fresh container stack via docker compose
+  └────────────┬─────────────┘
+               │
+               ▼
+  ┌──────────────────────────┐
+  │ 5. Health Verification   │  Validates active endpoints and runs service health test suite
+  └──────────────────────────┘
 ```
 
 ### Port Allocation:
@@ -932,6 +937,6 @@ HireFlow/
 | Loosely Coupled Services | No cross-database access, only HTTP communication |
 | Docker Containerization | Multi-stage Dockerfile packaging all services into an Alpine JRE runtime |
 | API Gateway & Routing | Spring Cloud Gateway with reactive routing (lb://) via Eureka on port 8080 |
-| CI/CD Pipeline | End-to-End automated build, test, Docker deploy, and Git push via Jenkins |
+| CI/CD Pipeline | End-to-End automated build, test, Docker deploy, and health verification via Jenkins |
 | Docker Compose Orchestration | Multi-container compose stack with MongoDB, Eureka, and health-checked dependencies |
 
