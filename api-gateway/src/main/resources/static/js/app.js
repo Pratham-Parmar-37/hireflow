@@ -1002,10 +1002,35 @@ window.viewFeignComposite = async function(appId) {
 // ==============================================================================
 // Demo Data Seeder
 // ==============================================================================
+
+/** Helper: fetch all items from an endpoint and delete each one by ID */
+async function clearCollection(endpoint) {
+  try {
+    const res = await fetch(`${API_BASE}${endpoint}`);
+    if (!res.ok) return;
+    const items = await res.json();
+    if (!Array.isArray(items)) return;
+    await Promise.all(
+      items.map(item =>
+        fetch(`${API_BASE}${endpoint}/${item.id}`, { method: 'DELETE' }).catch(() => {})
+      )
+    );
+  } catch { /* service may be down – skip */ }
+}
+
 async function seedDemoData() {
-  showToast('Populating sample records across microservices...', 'info');
+  showToast('Clearing old data & seeding fresh sample records...', 'info');
 
   try {
+    // ── Step 1: Wipe existing data (order matters – dependents first) ──
+    await clearCollection('/api/notifications');
+    await clearCollection('/api/interviews');
+    await clearCollection('/api/applications');
+    await clearCollection('/api/candidates');
+    await clearCollection('/api/jobs');
+    await clearCollection('/api/companies');
+
+    // ── Step 2: Seed fresh records ──────────────────────────────────────
     const compRes = await fetch(`${API_BASE}/api/companies`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
