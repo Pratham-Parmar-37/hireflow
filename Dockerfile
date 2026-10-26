@@ -6,6 +6,13 @@
 # ------------------------------------------------------------------------------
 # Stage 1: Build all microservice JARs using Maven
 # ------------------------------------------------------------------------------
+FROM node:22-alpine AS frontend-builder
+WORKDIR /frontend
+COPY frontend/package*.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
+
 FROM maven:3.9.6-eclipse-temurin-17 AS builder
 WORKDIR /workspace
 
@@ -47,6 +54,7 @@ RUN mvn -f src/notification-service/pom.xml clean package -DskipTests
 # 8. API Gateway
 COPY src/api-gateway/pom.xml src/api-gateway/
 COPY src/api-gateway/src src/api-gateway/src
+COPY --from=frontend-builder /frontend/dist/ src/api-gateway/src/main/resources/static/
 RUN mvn -f src/api-gateway/pom.xml clean package -DskipTests
 
 # ------------------------------------------------------------------------------

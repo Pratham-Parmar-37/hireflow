@@ -16,6 +16,8 @@ const state = {
   companies: [],
   users: [],
   notifications: [],
+  currentRole: 'RECRUITER',
+  simulatedCandidateId: null,
   serviceHealth: [
     { name: 'eureka-server', port: 8761, desc: 'Central Service Registry & Discovery Server', tech: 'Spring Cloud Netflix Eureka', status: 'unknown', latency: null },
     { name: 'api-gateway', port: 8088, desc: 'Dynamic Reactive Reverse Proxy & UI Host', tech: 'Spring Cloud Gateway (WebFlux)', status: 'unknown', latency: null },
@@ -33,6 +35,7 @@ const state = {
 // ==============================================================================
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
+  initRoleSwitcher();
   initTabs();
   initModals();
   initSearchAndFilters();
@@ -82,7 +85,11 @@ function initTabs() {
     'tab-pipeline': 'Hiring Pipeline',
     'tab-interviews': 'Interviews',
     'tab-companies': 'Companies & Team',
-    'tab-health': 'Service Health'
+    'tab-health': 'Service Health',
+    'tab-candidate-dashboard': 'My Dashboard',
+    'tab-job-board': 'Job Board',
+    'tab-my-applications': 'My Applications',
+    'tab-my-interviews': 'My Interviews'
   };
 
   tabButtons.forEach(tab => {
@@ -107,7 +114,11 @@ function initTabs() {
   const homeBtn = document.getElementById('brand-home-btn');
   if (homeBtn) {
     homeBtn.addEventListener('click', () => {
-      document.querySelector('.nav-item[data-tab="tab-overview"]')?.click();
+      if (state.currentRole === 'CANDIDATE') {
+        document.querySelector('.nav-item[data-tab="tab-candidate-dashboard"]')?.click();
+      } else {
+        document.querySelector('.nav-item[data-tab="tab-overview"]')?.click();
+      }
     });
   }
 }
@@ -132,6 +143,10 @@ async function fetchAllData() {
     renderPipeline();
     renderInterviews();
     updateKPIs();
+    // Also render candidate views if on that role
+    if (state.currentRole === 'CANDIDATE') {
+      renderCandidateViews();
+    }
   } catch (err) {
     console.error('Error fetching data:', err);
     showToast('Failed to load microservices data', 'error');
@@ -669,6 +684,12 @@ function initSearchAndFilters() {
 
   const candidateSearch = document.getElementById('candidate-search-input');
   if (candidateSearch) candidateSearch.addEventListener('input', renderCandidates);
+
+  // Candidate job board search/filter
+  const boardSearch = document.getElementById('board-search-input');
+  const boardType = document.getElementById('board-type-filter');
+  if (boardSearch) boardSearch.addEventListener('input', renderJobBoard);
+  if (boardType) boardType.addEventListener('change', renderJobBoard);
 }
 
 // ==============================================================================
@@ -1061,4 +1082,444 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+// ==============================================================================
+// Role Switching System
+// ==============================================================================
+function initRoleSwitcher() {
+  const switcher = document.getElementById('role-switcher');
+  if (!switcher) return;
+
+  // Restore saved role
+  const saved = localStorage.getItem('hireflow-role') || 'RECRUITER';
+  switcher.value = saved;
+  state.currentRole = saved;
+  applyRole(saved, false); // don't animate on init
+
+  switcher.addEventListener('change', () => {
+    const role = switcher.value;
+    state.currentRole = role;
+    localStorage.setItem('hireflow-role', role);
+    applyRole(role, true);
+    showToast(`Switched to ${getRoleName(role)} view`, 'info');
+  });
+}
+
+function getRoleName(role) {
+  const names = { RECRUITER: 'Recruiter', CANDIDATE: 'Candidate', ADMIN: 'Administrator' };
+  return names[role] || role;
+}
+
+function applyRole(role, animate) {
+  // 1. Show/hide nav items and section labels based on data-roles attribute
+  document.querySelectorAll('[data-roles]').forEach(el => {
+    const roles = el.getAttribute('data-roles').split(',');
+    if (roles.includes(role)) {
+      el.style.display = '';
+    } else {
+      el.style.display = 'none';
+    }
+  });
+
+  // 2. Clear all active states
+  document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+
+  // 3. Activate the default tab for this role
+  let defaultTab;
+  if (role === 'CANDIDATE') {
+    defaultTab = 'tab-candidate-dashboard';
+  } else {
+    defaultTab = 'tab-overview';
+  }
+
+  const defaultNavItem = document.querySelector(`.nav-item[data-tab="${defaultTab}"]`);
+  const defaultPane = document.getElementById(defaultTab);
+  if (defaultNavItem) defaultNavItem.classList.add('active');
+  if (defaultPane) defaultPane.classList.add('active');
+
+  // 4. Update breadcrumb
+  const titleEl = document.getElementById('current-view-title');
+  const titleMap = {
+    'tab-overview': 'Overview',
+    'tab-candidate-dashboard': 'My Dashboard'
+  };
+  if (titleEl) titleEl.textContent = titleMap[defaultTab] || 'Overview';
+
+  // 5. Update sidebar user info based on role
+  updateSidebarUserInfo(role);
+
+  // 6. Render candidate-specific views if switching to candidate
+  if (role === 'CANDIDATE') {
+    autoSelectCandidateId();
+    renderCandidateViews();
+  }
+}
+
+function updateSidebarUserInfo(role) {
+  const avatarEl = document.getElementById('sidebar-user-avatar');
+  const nameEl = document.getElementById('sidebar-user-name');
+  const roleEl = document.getElementById('sidebar-user-role');
+
+  if (role === 'CANDIDATE') {
+    // Use currently active candidate profile if available
+    const candidate = state.candidates.find(c => c.id === state.simulatedCandidateId) ||
+      (state.candidates.length > 0 ? state.candidates[0] : null);
+    if (candidate) {
+      const initials = (candidate.fullName || 'C').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+      if (avatarEl) avatarEl.textContent = initials;
+      if (nameEl) nameEl.textContent = candidate.fullName;
+      if (roleEl) roleEl.textContent = 'Candidate';
+    } else {
+      if (avatarEl) avatarEl.textContent = 'C';
+      if (nameEl) nameEl.textContent = 'Candidate User';
+      if (roleEl) roleEl.textContent = 'Candidate';
+    }
+  } else if (role === 'ADMIN') {
+    if (avatarEl) avatarEl.textContent = 'PP';
+    if (nameEl) nameEl.textContent = 'Pratham Parmar';
+    if (roleEl) roleEl.textContent = 'Administrator';
+  } else {
+    if (avatarEl) avatarEl.textContent = 'PP';
+    if (nameEl) nameEl.textContent = 'Pratham Parmar';
+    if (roleEl) roleEl.textContent = 'Recruiter';
+  }
+}
+
+function autoSelectCandidateId() {
+  // If simulatedCandidateId is already valid, preserve it
+  if (state.simulatedCandidateId && state.candidates.some(c => c.id === state.simulatedCandidateId)) {
+    return;
+  }
+  // Otherwise default to first candidate in database
+  if (state.candidates.length > 0) {
+    state.simulatedCandidateId = state.candidates[0].id;
+  } else {
+    state.simulatedCandidateId = null;
+  }
+}
+
+// ==============================================================================
+// Candidate Portal Renderers
+// ==============================================================================
+function renderCandidateViews() {
+  autoSelectCandidateId();
+  renderCandidateDashboard();
+  renderJobBoard();
+  renderMyApplications();
+  renderMyInterviews();
+  updateSidebarUserInfo('CANDIDATE');
+}
+
+function getCandidateApplications() {
+  if (!state.simulatedCandidateId) return state.applications;
+  return state.applications.filter(a => a.candidateId === state.simulatedCandidateId);
+}
+
+function getCandidateInterviews() {
+  if (!state.simulatedCandidateId) return state.interviews;
+  return state.interviews.filter(i => i.candidateId === state.simulatedCandidateId);
+}
+
+function renderCandidateDashboard() {
+  const candidateApps = getCandidateApplications();
+  const candidateInterviews = getCandidateInterviews();
+  const candidate = state.candidates.find(c => c.id === state.simulatedCandidateId);
+
+  // Candidate Persona Dropdown
+  const personaSelect = document.getElementById('candidate-persona-select');
+  if (personaSelect && state.candidates.length > 0) {
+    personaSelect.innerHTML = state.candidates.map(c => `
+      <option value="${c.id}" ${c.id === state.simulatedCandidateId ? 'selected' : ''}>
+        ${escapeHtml(c.fullName)}
+      </option>
+    `).join('');
+
+    if (!personaSelect.dataset.listenerBound) {
+      personaSelect.dataset.listenerBound = 'true';
+      personaSelect.addEventListener('change', (e) => {
+        state.simulatedCandidateId = e.target.value;
+        renderCandidateViews();
+        const cand = state.candidates.find(c => c.id === e.target.value);
+        if (cand) showToast(`Switched view to ${cand.fullName}`, 'info');
+      });
+    }
+  }
+
+  // Profile card
+  if (candidate) {
+    const initials = (candidate.fullName || 'C').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+    const avatarEl = document.getElementById('candidate-profile-avatar');
+    const nameEl = document.getElementById('candidate-profile-name');
+    const emailEl = document.getElementById('candidate-profile-email');
+    if (avatarEl) avatarEl.textContent = initials;
+    if (nameEl) nameEl.textContent = candidate.fullName;
+    if (emailEl) emailEl.textContent = candidate.email;
+  }
+
+  // Stats
+  const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setEl('my-stat-apps', candidateApps.length);
+  setEl('my-stat-interviews', candidateInterviews.length);
+  setEl('my-stat-offers', candidateApps.filter(a => a.status === 'OFFERED').length);
+
+  // Badge counters
+  setEl('badge-my-apps-count', candidateApps.length);
+  setEl('badge-my-interviews-count', candidateInterviews.length);
+  setEl('badge-jobs-board-count', state.jobs.filter(j => (j.status || 'OPEN') === 'OPEN').length);
+
+  // Recent applications (max 3)
+  const recentAppsContainer = document.getElementById('candidate-recent-apps');
+  if (recentAppsContainer) {
+    if (candidateApps.length === 0) {
+      recentAppsContainer.innerHTML = `<div class="empty-state"><p>No applications yet. Browse the Job Board to find your next opportunity!</p></div>`;
+    } else {
+      recentAppsContainer.innerHTML = candidateApps.slice(0, 3).map(app => renderMyAppCard(app)).join('');
+    }
+  }
+
+  // Upcoming interviews (max 3)
+  const interviewsContainer = document.getElementById('candidate-upcoming-interviews');
+  if (interviewsContainer) {
+    if (candidateInterviews.length === 0) {
+      interviewsContainer.innerHTML = `<div class="empty-state"><p>No interviews scheduled yet.</p></div>`;
+    } else {
+      interviewsContainer.innerHTML = candidateInterviews.slice(0, 3).map(iv => renderMyInterviewCard(iv)).join('');
+    }
+  }
+}
+
+function getStatusPillClass(status) {
+  const map = {
+    'APPLIED': 'status-pill-applied',
+    'UNDER_REVIEW': 'status-pill-under-review',
+    'SHORTLISTED': 'status-pill-shortlisted',
+    'OFFERED': 'status-pill-offered',
+    'REJECTED': 'status-pill-rejected'
+  };
+  return map[status] || 'status-pill-applied';
+}
+
+function getStatusLabel(status) {
+  const map = {
+    'APPLIED': 'Applied',
+    'UNDER_REVIEW': 'Under Review',
+    'SHORTLISTED': 'Shortlisted',
+    'OFFERED': 'Offered 🎉',
+    'REJECTED': 'Not Selected'
+  };
+  return map[status] || status;
+}
+
+function renderMyAppCard(app) {
+  const job = state.jobs.find(j => j.id === app.jobId) || { title: 'Position', employmentType: 'FULL_TIME' };
+  const company = state.companies.find(c => c.id === job.companyId) || { companyName: 'Company' };
+  const status = app.status || 'APPLIED';
+
+  return `
+    <div class="my-app-card">
+      <div class="my-app-card-header">
+        <div>
+          <div class="my-app-job-title">${escapeHtml(job.title)}</div>
+          <div class="my-app-company">${escapeHtml(company.companyName)}</div>
+        </div>
+        <span class="status-pill ${getStatusPillClass(status)}">${getStatusLabel(status)}</span>
+      </div>
+      <div class="my-app-meta">
+        <span>Applied: ${escapeHtml(app.applicationDate || 'Recently')}</span>
+        <span class="badge badge-neutral">${escapeHtml(job.employmentType || 'FULL_TIME')}</span>
+        ${job.salary ? `<span>${escapeHtml(job.salary)}</span>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function renderMyInterviewCard(iv) {
+  const candidate = state.candidates.find(c => c.id === iv.candidateId) || { fullName: 'Candidate' };
+  const app = state.applications.find(a => a.id === iv.applicationId);
+  const job = app ? (state.jobs.find(j => j.id === app.jobId) || { title: 'Position' }) : { title: 'Position' };
+
+  // Parse date for the date badge
+  let month = '';
+  let day = '';
+  if (iv.interviewDate) {
+    try {
+      const d = new Date(iv.interviewDate);
+      month = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+      day = d.getDate();
+    } catch (e) {
+      month = '';
+      day = iv.interviewDate;
+    }
+  }
+
+  return `
+    <div class="my-interview-card">
+      <div class="interview-date-badge">
+        <span class="date-month">${escapeHtml(month)}</span>
+        <span class="date-day">${escapeHtml(String(day))}</span>
+      </div>
+      <div class="my-interview-info">
+        <div class="my-interview-title">${escapeHtml(job.title)}</div>
+        <div class="my-interview-meta">
+          <span class="badge badge-neutral" style="display: inline-flex; padding: 0.1rem 0.4rem; font-size: 0.65rem;">${escapeHtml(iv.interviewType || 'ONLINE')}</span>
+          &bull; ${escapeHtml(iv.feedback || 'Assessment round')}
+        </div>
+      </div>
+      <span class="badge ${iv.status === 'COMPLETED' ? 'badge-open' : 'badge-neutral'}">${escapeHtml(iv.status || 'SCHEDULED')}</span>
+    </div>
+  `;
+}
+
+// ==============================================================================
+// Candidate Job Board
+// ==============================================================================
+function renderJobBoard() {
+  const container = document.getElementById('job-board-container');
+  if (!container) return;
+
+  const search = (document.getElementById('board-search-input')?.value || '').toLowerCase();
+  const typeFilter = document.getElementById('board-type-filter')?.value || '';
+
+  // Only show OPEN jobs
+  const filtered = state.jobs.filter(j => {
+    if ((j.status || 'OPEN') !== 'OPEN') return false;
+    const matchesSearch = !search ||
+      j.title?.toLowerCase().includes(search) ||
+      j.description?.toLowerCase().includes(search) ||
+      j.salary?.toLowerCase().includes(search);
+    const matchesType = !typeFilter || j.employmentType === typeFilter;
+    return matchesSearch && matchesType;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state" style="grid-column: 1 / -1;">
+        <p>No open positions match your search. Check back soon!</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = filtered.map(job => {
+    const company = state.companies.find(c => c.id === job.companyId) || { companyName: 'Hiring Partner' };
+    // Check if this candidate has already applied
+    const alreadyApplied = state.simulatedCandidateId &&
+      state.applications.some(a => a.candidateId === state.simulatedCandidateId && a.jobId === job.id);
+
+    return `
+      <div class="job-card">
+        <div class="job-card-top">
+          <div>
+            <h3 class="job-title">${escapeHtml(job.title)}</h3>
+            <div class="job-company">${escapeHtml(company.companyName)}</div>
+          </div>
+          <span class="badge badge-open">Open</span>
+        </div>
+
+        <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+          <span class="badge badge-neutral">${escapeHtml(job.employmentType || 'FULL_TIME')}</span>
+          <span class="badge badge-neutral">${escapeHtml(job.experienceRequired || '1-3 years')}</span>
+        </div>
+
+        <p class="job-desc">${escapeHtml(job.description || 'Engineering role within a modern tech stack.')}</p>
+
+        <div class="job-card-bottom">
+          <div class="job-salary">${escapeHtml(job.salary || 'Competitive')}</div>
+          ${alreadyApplied
+            ? `<span class="badge badge-open" style="padding: 0.35rem 0.75rem;">✓ Applied</span>`
+            : `<button class="btn btn-primary" onclick="candidateApplyToJob('${job.id}')" style="padding: 0.35rem 0.75rem; font-size: 0.75rem;">Apply Now</button>`
+          }
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+window.candidateApplyToJob = async function(jobId) {
+  if (!state.simulatedCandidateId) {
+    showToast('No candidate profile found. Please create a candidate profile first.', 'error');
+    return;
+  }
+
+  const payload = {
+    candidateId: state.simulatedCandidateId,
+    jobId: jobId,
+    applicationDate: new Date().toISOString().split('T')[0],
+    status: 'APPLIED'
+  };
+
+  try {
+    const res = await fetch(`${API_BASE}/api/applications`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      showToast('Application submitted successfully! 🎉', 'success');
+      // Push event-driven notification
+      fetch(`${API_BASE}/api/notifications`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: state.simulatedCandidateId,
+          message: `Application successfully submitted! Current status: APPLIED.`,
+          status: 'UNREAD'
+        })
+      }).then(() => fetchNotifications()).catch(() => {});
+
+      await fetchApplications();
+      updateKPIs();
+      renderCandidateViews();
+    } else {
+      throw new Error('Failed to submit application');
+    }
+  } catch (err) {
+    showToast('Error submitting application: ' + err.message, 'error');
+  }
+};
+
+// ==============================================================================
+// Candidate: My Applications View
+// ==============================================================================
+function renderMyApplications() {
+  const container = document.getElementById('my-applications-container');
+  if (!container) return;
+
+  const candidateApps = getCandidateApplications();
+
+  if (candidateApps.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <p>You haven't applied to any jobs yet.</p>
+        <p style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.25rem;">Browse the Job Board to discover opportunities that match your skills.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = candidateApps.map(app => renderMyAppCard(app)).join('');
+}
+
+// ==============================================================================
+// Candidate: My Interviews View
+// ==============================================================================
+function renderMyInterviews() {
+  const container = document.getElementById('my-interviews-container');
+  if (!container) return;
+
+  const candidateInterviews = getCandidateInterviews();
+
+  if (candidateInterviews.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <p>No interviews scheduled yet.</p>
+        <p style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.25rem;">Once your application is shortlisted, interviews will appear here.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = candidateInterviews.map(iv => renderMyInterviewCard(iv)).join('');
 }
