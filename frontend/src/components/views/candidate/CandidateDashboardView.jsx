@@ -13,7 +13,9 @@ export default function CandidateDashboardView() {
     jobs,
     companies,
     setActiveTab,
-    addToast
+    addToast,
+    currentUser,
+    role
   } = useApp();
 
   const handlePersonaChange = (e) => {
@@ -65,20 +67,27 @@ export default function CandidateDashboardView() {
           <p className="view-desc">Track your job applications, upcoming interviews, and career progress.</p>
         </div>
 
-        {/* Candidate Persona Switcher */}
-        <div className="candidate-persona-picker">
-          <label htmlFor="persona-select" className="candidate-persona-label">Testing as:</label>
-          <select
-            id="persona-select"
-            className="candidate-persona-select"
-            value={simulatedCandidateId || ''}
-            onChange={handlePersonaChange}
-          >
-            {candidates.map(c => (
-              <option key={c.id} value={c.id}>{c.fullName}</option>
-            ))}
-          </select>
-        </div>
+        {/* Candidate Persona Switcher or Authenticated Status */}
+        {role !== 'CANDIDATE' ? (
+          <div className="candidate-persona-picker">
+            <label htmlFor="persona-select" className="candidate-persona-label">Testing as:</label>
+            <select
+              id="persona-select"
+              className="candidate-persona-select"
+              value={simulatedCandidateId || ''}
+              onChange={handlePersonaChange}
+            >
+              {candidates.map(c => (
+                <option key={c.id} value={c.id}>{c.fullName}</option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', background: 'var(--bg-surface)', padding: '0.45rem 0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', fontSize: '0.825rem', boxShadow: 'var(--shadow-xs)' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--role-candidate)', boxShadow: '0 0 6px var(--role-candidate)' }}></span>
+            <span style={{ color: 'var(--text-secondary)' }}>Logged in as <strong style={{ color: 'var(--text-primary)' }}>{currentUser?.fullName}</strong></span>
+          </div>
+        )}
       </div>
 
       {/* Candidate Profile Summary Card */}

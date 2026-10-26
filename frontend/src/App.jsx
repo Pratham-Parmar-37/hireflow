@@ -19,8 +19,10 @@ import CandidateJobBoardView from './components/views/candidate/CandidateJobBoar
 import CandidateApplicationsView from './components/views/candidate/CandidateApplicationsView';
 import CandidateInterviewsView from './components/views/candidate/CandidateInterviewsView';
 
-// Administrator View
 import ServiceHealthView from './components/views/admin/ServiceHealthView';
+
+// Auth View
+import LoginView from './components/views/auth/LoginView';
 
 // Modals
 import PostJobModal from './components/modals/PostJobModal';
@@ -32,7 +34,16 @@ import AddUserModal from './components/modals/AddUserModal';
 import FeignViewerModal from './components/modals/FeignViewerModal';
 
 function MainContent() {
-  const { activeTab, activeModal, isLoading, loadErrors, refreshAll } = useApp();
+  const { activeTab, activeModal, isLoading, loadErrors, refreshAll, isAuthenticated } = useApp();
+
+  if (!isAuthenticated) {
+    return (
+      <div className="app-wrapper" style={{ display: 'block', minHeight: '100vh', background: 'var(--bg-app)' }}>
+        <LoginView />
+        <ToastContainer />
+      </div>
+    );
+  }
 
   const renderActiveView = () => {
     switch (activeTab) {

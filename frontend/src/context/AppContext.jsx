@@ -19,16 +19,29 @@ export function AppProvider({ children }) {
   // Theme state
   const [theme, setTheme] = useState(() => localStorage.getItem('hireflow-theme') || 'light');
 
-  // Role state ('RECRUITER' | 'CANDIDATE' | 'ADMIN')
-  const [role, setRoleState] = useState(() => localStorage.getItem('hireflow-role') || 'RECRUITER');
+  // Authenticated User from MongoDB
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('hireflow-auth-user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [authToken, setAuthToken] = useState(() => localStorage.getItem('hireflow-auth-token') || null);
+
+  // Authenticated Role from MongoDB
+  const role = currentUser?.role || null;
+  const isAuthenticated = Boolean(currentUser && authToken);
 
   // Simulated Candidate Persona for candidate views
   const [simulatedCandidateId, setSimulatedCandidateId] = useState(null);
 
   // Active Tab
-  const [activeTab, setActiveTab] = useState(() => {
-    const savedRole = localStorage.getItem('hireflow-role') || 'RECRUITER';
-    return savedRole === 'CANDIDATE' ? 'tab-candidate-dashboard' : 'tab-overview';
+  const [activeTab, setActiveTabState] = useState(() => {
+    const userRole = currentUser?.role;
+    return userRole === 'CANDIDATE' ? 'tab-candidate-dashboard' : 'tab-overview';
   });
 
   // Microservices Entities
@@ -84,19 +97,81 @@ export function AppProvider({ children }) {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   }, []);
 
-  // Role switching
-  const setRole = useCallback((newRole) => {
-    setActiveModal(null);
-    setIsNotificationsOpen(false);
-    setRoleState(newRole);
-    localStorage.setItem('hireflow-role', newRole);
-    if (newRole === 'CANDIDATE') {
-      setActiveTab('tab-candidate-dashboard');
-    } else {
-      setActiveTab('tab-overview');
+  // Role-guarded active tab setter
+  const setActiveTab = useCallback((newTab) => {
+    if (role === 'CANDIDATE') {
+      const allowed = ['tab-candidate-dashboard', 'tab-job-board', 'tab-my-applications', 'tab-my-interviews'];
+      if (!allowed.includes(newTab)) {
+        setActiveTabState('tab-candidate-dashboard');
+        return;
+      }
+    } else if (role === 'RECRUITER') {
+      if (newTab === 'tab-health') {
+        setActiveTabState('tab-overview');
+        addToast('Service Health monitoring requires Administrator permissions.', 'warning');
+        return;
+      }
     }
-    const roleNames = { RECRUITER: 'Recruiter', CANDIDATE: 'Candidate', ADMIN: 'Administrator' };
-    addToast(`Switched to ${roleNames[newRole] || newRole} view`, 'info');
+    setActiveTabState(newTab);
+  }, [role, addToast]);
+
+  // Authentication: Login
+  const login = useCallback(async (email, password) => {
+    const res = await api.login(email, password);
+    setCurrentUser(res.user);
+    setAuthToken(res.token);
+    localStorage.setItem('hireflow-auth-user', JSON.stringify(res.user));
+    localStorage.setItem('hireflow-auth-token', res.token);
+
+    if (res.user.role === 'CANDIDATE') {
+      setActiveTabState('tab-candidate-dashboard');
+    } else {
+      setActiveTabState('tab-overview');
+    }
+
+    addToast(`Signed in as ${res.user.fullName} (${res.user.role})`, 'success');
+    return res.user;
+  }, [addToast]);
+
+  // Authentication: Logout
+  const logout = useCallback(() => {
+    setCurrentUser(null);
+    setAuthToken(null);
+    localStorage.removeItem('hireflow-auth-user');
+    localStorage.removeItem('hireflow-auth-token');
+    setActiveTabState('tab-overview');
+    addToast('Signed out of session.', 'info');
+  }, [addToast]);
+
+  // Authentication: Register
+  const register = useCallback(async (userData) => {
+    const res = await api.register(userData);
+    setCurrentUser(res.user);
+    setAuthToken(res.token);
+    localStorage.setItem('hireflow-auth-user', JSON.stringify(res.user));
+    localStorage.setItem('hireflow-auth-token', res.token);
+
+    if (res.user.role === 'CANDIDATE') {
+      try {
+        const cand = await api.createCandidate({
+          userId: res.user.id,
+          fullName: res.user.fullName,
+          email: res.user.email,
+          skills: ['Software Engineering'],
+          experience: 'Candidate Profile',
+          education: 'Degree'
+        });
+        setSimulatedCandidateId(cand.id);
+      } catch (e) {
+        console.warn('Candidate profile creation notice:', e);
+      }
+      setActiveTabState('tab-candidate-dashboard');
+    } else {
+      setActiveTabState('tab-overview');
+    }
+
+    addToast(`Account created! Welcome, ${res.user.fullName}!`, 'success');
+    return res.user;
   }, [addToast]);
 
   // Data fetching
@@ -122,11 +197,17 @@ export function AppProvider({ children }) {
       if (results[1].status === 'fulfilled') {
         const cands = results[1].value;
         setCandidates(cands);
-        // Default simulated persona if not set or invalid
-        setSimulatedCandidateId(prev => {
-          if (prev && cands.some(c => c.id === prev)) return prev;
-          return cands.length > 0 ? cands[0].id : null;
-        });
+        // Link candidate persona
+        if (currentUser?.role === 'CANDIDATE') {
+          const match = cands.find(c => c.email?.toLowerCase() === currentUser.email?.toLowerCase() || c.userId === currentUser.id);
+          if (match) setSimulatedCandidateId(match.id);
+          else if (cands.length > 0) setSimulatedCandidateId(cands[0].id);
+        } else {
+          setSimulatedCandidateId(prev => {
+            if (prev && cands.some(c => c.id === prev)) return prev;
+            return cands.length > 0 ? cands[0].id : null;
+          });
+        }
       }
       if (results[2].status === 'fulfilled') setApplications(results[2].value);
       if (results[3].status === 'fulfilled') setInterviews(results[3].value);
@@ -141,11 +222,9 @@ export function AppProvider({ children }) {
     } finally {
       if (sequence === refreshSequence.current) setIsLoading(false);
     }
-  }, []);
+  }, [currentUser]);
 
   useEffect(() => {
-    // This effect starts the initial external API synchronization.
-    // eslint-disable-next-line react/set-state-in-effect
     refreshAll();
   }, [refreshAll]);
 
@@ -189,17 +268,17 @@ export function AppProvider({ children }) {
 
       setApplications(prev => [...prev, created]);
       const candidate = candidates.find(item => item.id === simulatedCandidateId);
-      // Notification delivery must not turn a saved application into a reported failure.
-      if (candidate?.userId) api.createNotification({
-        userId: candidate.userId,
-        type: 'APPLICATION',
-        createdAt: new Date().toISOString(),
-        message: 'Application successfully submitted! Current status: APPLIED.',
-        status: 'UNREAD'
-      }).then(() => api.getNotifications().then(setNotifications)).catch(() => addToast('Application saved, but its notification could not be delivered.', 'warning'));
+      if (candidate?.userId) {
+        api.createNotification({
+          userId: candidate.userId,
+          type: 'APPLICATION',
+          createdAt: new Date().toISOString(),
+          message: 'Application successfully submitted! Current status: APPLIED.',
+          status: 'UNREAD'
+        }).then(() => api.getNotifications().then(setNotifications)).catch(() => {});
+      }
 
       addToast('Application submitted successfully! 🎉', 'success');
-
     } catch (err) {
       addToast('Failed to submit application: ' + err.message, 'error');
     } finally {
@@ -269,8 +348,13 @@ export function AppProvider({ children }) {
         visibleNotifications,
         theme,
         toggleTheme,
+        currentUser,
+        authToken,
+        isAuthenticated,
         role,
-        setRole,
+        login,
+        logout,
+        register,
         activeTab,
         setActiveTab,
         simulatedCandidateId,

@@ -14,6 +14,7 @@ if (userDb.users.countDocuments() === 0) {
       fullName: 'Pratham Parmar',
       email: 'pratham@hireflow.ai',
       role: 'ADMIN',
+      password: 'admin123',
       _class: 'com.hireflow.userservice.entity.User'
     },
     {
@@ -21,6 +22,7 @@ if (userDb.users.countDocuments() === 0) {
       fullName: 'Sarah Jenkins',
       email: 'sarah.j@hireflow.ai',
       role: 'RECRUITER',
+      password: 'recruiter123',
       _class: 'com.hireflow.userservice.entity.User'
     },
     {
@@ -28,6 +30,7 @@ if (userDb.users.countDocuments() === 0) {
       fullName: 'Alina Vance',
       email: 'alina.v@starlight.tech',
       role: 'CANDIDATE',
+      password: 'candidate123',
       _class: 'com.hireflow.userservice.entity.User'
     }
   ]);

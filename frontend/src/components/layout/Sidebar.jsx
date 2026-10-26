@@ -10,13 +10,16 @@ import {
   Activity,
   UserCheck,
   BookmarkCheck,
-  CalendarClock
+  CalendarClock,
+  LogOut,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function Sidebar() {
   const {
+    currentUser,
     role,
-    setRole,
+    logout,
     activeTab,
     setActiveTab,
     activeCandidate,
@@ -36,32 +39,22 @@ export default function Sidebar() {
     }
   };
 
-  // Determine user badge info based on active role
-  let userAvatar = 'R';
-  let userName = 'Recruiter workspace';
-  let userRoleLabel = 'Recruiter';
-
-  if (role === 'CANDIDATE') {
-    if (activeCandidate) {
-      userAvatar = (activeCandidate.fullName || 'C')
-        .split(' ')
-        .map(n => n[0])
-        .slice(0, 2)
-        .join('')
-        .toUpperCase();
-      userName = activeCandidate.fullName;
-    } else {
-      userAvatar = 'C';
-      userName = 'Candidate User';
-    }
-    userRoleLabel = 'Candidate';
-  } else if (role === 'ADMIN') {
-    userRoleLabel = 'Administrator';
-    userAvatar = 'A';
-    userName = 'Administrator workspace';
-  }
-
   const openJobsCount = jobs.filter(j => (j.status || 'OPEN') === 'OPEN').length;
+
+  const initials = (currentUser?.fullName || 'U')
+    .split(' ')
+    .map(n => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
+  const roleBadgeMap = {
+    ADMIN: { label: 'Administrator', class: 'role-indicator-admin' },
+    RECRUITER: { label: 'Recruiter', class: 'role-indicator-recruiter' },
+    CANDIDATE: { label: 'Candidate', class: 'role-indicator-candidate' }
+  };
+
+  const roleInfo = roleBadgeMap[role] || { label: role || 'User', class: 'role-indicator-recruiter' };
 
   return (
     <aside className="sidebar">
@@ -74,19 +67,28 @@ export default function Sidebar() {
         <span className="sidebar-workspace-pill">v2.0</span>
       </div>
 
-      {/* Role Switcher */}
-      <div className="role-switcher-section">
-        <label className="role-switcher-label" htmlFor="role-select">Demo view</label>
-        <select
-          id="role-select"
-          className="role-switcher-select"
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-        >
-          <option value="RECRUITER">🎯 Recruiter</option>
-          <option value="CANDIDATE">👤 Candidate</option>
-          <option value="ADMIN">⚙️ Administrator</option>
-        </select>
+      {/* Authenticated User Status Card */}
+      <div style={{
+        padding: '0.75rem 1rem',
+        borderBottom: '1px solid var(--border-subtle)',
+        background: 'var(--bg-subtle)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.68rem', color: 'var(--success-text)', fontWeight: 600 }}>
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--success)', display: 'inline-block' }} />
+            <span></span>
+          </div>
+          <span className={`role-indicator ${roleInfo.class}`} style={{ fontSize: '0.65rem', padding: '0.1rem 0.45rem' }}>
+            {roleInfo.label}
+          </span>
+        </div>
+
+        <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {currentUser?.fullName}
+        </div>
+        <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {currentUser?.email}
+        </div>
       </div>
 
       {/* Navigation */}
@@ -155,7 +157,7 @@ export default function Sidebar() {
         {/* Candidate Sections */}
         {role === 'CANDIDATE' && (
           <>
-            <div className="nav-section-label">My Portal</div>
+            <div className="nav-section-label">My Candidate Portal</div>
 
             <button
               className={`nav-item ${activeTab === 'tab-candidate-dashboard' ? 'active' : ''}`}
@@ -232,16 +234,28 @@ export default function Sidebar() {
         )}
       </nav>
 
-      {/* Sidebar Footer User Badge */}
+      {/* Sidebar Footer User Badge with Sign Out */}
       <div className="sidebar-footer">
         <div className="sidebar-user-row">
           <div className="user-profile-badge">
-            <div className="user-avatar-sm">{userAvatar}</div>
+            <div className="user-avatar-sm">{initials}</div>
             <div>
-              <div className="user-info-text">{userName}</div>
-              <div className="user-role-text">{userRoleLabel}</div>
+              <div className="user-info-text">{currentUser?.fullName}</div>
+              <div className="user-role-text">{roleInfo.label}</div>
             </div>
           </div>
+
+          <button
+            type="button"
+            className="theme-toggle-btn"
+            onClick={logout}
+            title="Sign Out / Switch Account"
+            aria-label="Sign Out"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: 'var(--danger-text)' }}
+          >
+            <LogOut size={13} />
+            <span>Exit</span>
+          </button>
         </div>
       </div>
     </aside>

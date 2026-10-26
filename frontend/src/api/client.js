@@ -5,10 +5,16 @@ export async function request(path, options = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
   try {
-    const response = await fetch(`${API_BASE}${path}`, { ...options, signal: controller.signal });
+    const token = localStorage.getItem('hireflow-auth-token');
+    const headers = { ...options.headers };
+    if (token && !headers['Authorization']) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE}${path}`, { ...options, headers, signal: controller.signal });
     if (!response.ok) {
       const detail = await response.json().catch(() => null);
-      throw new Error(detail?.message || `Request failed (HTTP ${response.status})`);
+      throw new Error(detail?.message || detail?.error || `Request failed (HTTP ${response.status})`);
     }
     if (response.status === 204) return null;
     return await response.json();
@@ -25,9 +31,31 @@ async function list(resource) {
   if (!Array.isArray(data)) throw new Error(`Invalid ${resource} response`);
   return data;
 }
+
 function write(resource, method, data) {
   return request(`/api/${resource}`, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
 }
+
+// Authentication & Identity
+export const login = (email, password) =>
+  request('/api/users/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+
+export const register = (userData) =>
+  request('/api/users/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(userData)
+  });
+
+export const getMe = (token) =>
+  request('/api/auth/me', {
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  });
+
 export const getJobs = () => list('jobs');
 export const createJob = data => write('jobs', 'POST', data);
 export const getCandidates = () => list('candidates');

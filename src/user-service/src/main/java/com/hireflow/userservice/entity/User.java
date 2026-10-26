@@ -1,5 +1,6 @@
 package com.hireflow.userservice.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -12,6 +13,9 @@ public class User {
     private String email;
     private String role;
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String password;
+
     public User() {
     }
 
@@ -19,6 +23,13 @@ public class User {
         this.fullName = fullName;
         this.email = email;
         this.role = role;
+    }
+
+    public User(String fullName, String email, String role, String password) {
+        this.fullName = fullName;
+        this.email = email;
+        this.role = role;
+        this.password = password;
     }
 
     public String getId() {
@@ -51,5 +62,13 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

@@ -1,5 +1,7 @@
 package com.hireflow.userservice.controller;
 
+import com.hireflow.userservice.dto.AuthResponse;
+import com.hireflow.userservice.dto.LoginRequest;
 import com.hireflow.userservice.entity.User;
 import com.hireflow.userservice.service.UserService;
 import org.springframework.http.HttpStatus;
@@ -14,7 +16,6 @@ public class UserController {
 
     private final UserService userService;
 
-    // Constructor injection
     public UserController(UserService userService) {
         this.userService = userService;
     }
@@ -34,6 +35,18 @@ public class UserController {
     public ResponseEntity<User> createUser(@RequestBody User user) {
         User created = userService.createUser(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+        AuthResponse response = userService.authenticate(request.getEmail(), request.getPassword());
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<AuthResponse> register(@RequestBody User user) {
+        AuthResponse response = userService.register(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
