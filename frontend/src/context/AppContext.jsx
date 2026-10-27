@@ -301,6 +301,60 @@ export function AppProvider({ children }) {
     }
   }, [applications, addToast]);
 
+  // Recruiter: complete interview session
+  const completeInterviewSession = useCallback(async (interviewId, feedback) => {
+    try {
+      const updated = await api.completeInterview(interviewId, feedback);
+      setInterviews(prev => prev.map(i => i.id === interviewId ? updated : i));
+      addToast('Interview marked as Completed! ✅', 'success');
+
+      const interview = interviews.find(i => i.id === interviewId);
+      if (interview) {
+        const cand = candidates.find(c => c.id === interview.candidateId);
+        if (cand?.userId) {
+          api.createNotification({
+            userId: cand.userId,
+            type: 'INTERVIEW',
+            createdAt: new Date().toISOString(),
+            message: `Your interview has been completed! Notes: ${feedback || 'Evaluated successfully.'}`,
+            status: 'UNREAD'
+          }).then(() => api.getNotifications().then(setNotifications)).catch(() => {});
+        }
+      }
+      return updated;
+    } catch (err) {
+      addToast('Failed to complete interview: ' + err.message, 'error');
+      throw err;
+    }
+  }, [interviews, candidates, addToast]);
+
+  // Recruiter: cancel interview session
+  const cancelInterviewSession = useCallback(async (interviewId, reason) => {
+    try {
+      const updated = await api.cancelInterview(interviewId, reason);
+      setInterviews(prev => prev.map(i => i.id === interviewId ? updated : i));
+      addToast('Interview session cancelled.', 'info');
+
+      const interview = interviews.find(i => i.id === interviewId);
+      if (interview) {
+        const cand = candidates.find(c => c.id === interview.candidateId);
+        if (cand?.userId) {
+          api.createNotification({
+            userId: cand.userId,
+            type: 'INTERVIEW',
+            createdAt: new Date().toISOString(),
+            message: `Your scheduled interview was cancelled.${reason ? ` Reason: ${reason}` : ''}`,
+            status: 'UNREAD'
+          }).then(() => api.getNotifications().then(setNotifications)).catch(() => {});
+        }
+      }
+      return updated;
+    } catch (err) {
+      addToast('Failed to cancel interview: ' + err.message, 'error');
+      throw err;
+    }
+  }, [interviews, candidates, addToast]);
+
   // Recruiter: OpenFeign composite viewer
   const viewFeignComposite = useCallback(async (appId) => {
     setActiveModal('feign-viewer');
@@ -385,7 +439,9 @@ export function AppProvider({ children }) {
         refreshHealth,
         candidateApplyToJob,
         updateApplicationStatus,
-        viewFeignComposite
+        viewFeignComposite,
+        completeInterviewSession,
+        cancelInterviewSession
       }}
     >
       {children}

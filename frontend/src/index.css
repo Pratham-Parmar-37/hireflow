@@ -873,6 +873,12 @@ body {
   border-color: var(--badge-neutral-border);
 }
 
+.badge-danger {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  border-color: var(--danger-border);
+}
+
 .job-desc {
   font-size: 0.785rem;
   color: var(--text-secondary);

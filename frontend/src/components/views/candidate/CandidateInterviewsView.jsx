@@ -57,7 +57,7 @@ export default function CandidateInterviewsView() {
                     &bull; {iv.feedback || 'Technical round'}
                   </div>
                 </div>
-                <span className={`badge ${iv.status === 'COMPLETED' ? 'badge-open' : 'badge-neutral'}`}>
+                <span className={`badge ${iv.status === 'COMPLETED' ? 'badge-open' : iv.status === 'CANCELLED' ? 'badge-danger' : 'badge-neutral'}`}>
                   {iv.status || 'SCHEDULED'}
                 </span>
               </div>

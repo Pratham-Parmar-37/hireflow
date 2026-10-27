@@ -64,6 +64,17 @@ export const getApplications = () => list('applications');
 export const createApplication = data => write('applications', 'POST', data);
 export const getInterviews = () => list('interviews');
 export const createInterview = data => write('interviews', 'POST', data);
+export const updateInterview = (id, data) => write(`interviews/${encodeURIComponent(id)}`, 'PUT', data);
+export const completeInterview = (id, feedback) => request(`/api/interviews/${encodeURIComponent(id)}/complete`, {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ feedback: feedback || '' })
+});
+export const cancelInterview = (id, reason) => request(`/api/interviews/${encodeURIComponent(id)}/cancel`, {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ reason: reason || '' })
+});
 export const getCompanies = () => list('companies');
 export const createCompany = data => write('companies', 'POST', data);
 export const getUsers = () => list('users');
